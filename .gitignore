@@ -1,0 +1,69 @@
+# Frontend (Vite + React) Build Files
+# Ignore Vite's build output
+/dist/
+/build/
+
+# Node.js dependencies
+/node_modules/
+
+# Vite cache
+/.vite/
+
+# Vite-specific files (useful when debugging, but can be ignored)
+.vite/
+
+# .env files (environment-specific variables)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Operating System files
+.DS_Store   # macOS Finder
+Thumbs.db   # Windows Explorer
+
+# IDE/Editor specific files
+.vscode/   # VSCode settings
+.idea/     # JetBrains IDEs settings
+*.sublime-workspace
+*.sublime-project
+
+# Flask-specific (Python) files
+
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment directories (assuming you're using venv or virtualenv)
+venv/
+env/
+.venv/
+env.bak/
+
+# Flask configuration (environment variables, sensitive information)
+*.env
+*.flaskenv
+
+# MySQL or SQLite database files (if used)
+*.db
+*.sqlite3
+
+# Flask migrations folder (if you're using Flask-Migrate)
+migrations/
+
+# Logs (backend)
+*.log
+
+# IDE-specific files (if using PyCharm or similar IDE)
+.idea/
+
+# Coverage reports
+.coverage
+*.cover
+*.coverage.*
+
+# Flask Debugger Files
+*.pdb

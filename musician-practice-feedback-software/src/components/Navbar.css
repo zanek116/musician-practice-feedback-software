@@ -1,0 +1,47 @@
+/* Navbar container */
+nav {
+    background-color: #333;
+    display: flex;
+    align-items: center;
+    height: 100px; /* Set a fixed height for the navbar */
+  }
+  
+  /* Logo styling */
+  nav .logo {
+    height: 100%; /* Make the logo the same height as the navbar */
+  }
+  
+  /* Navigation container */
+  nav .nav-container {
+    display: flex;
+    justify-content: center; /* Center the navigation list items */
+    flex-grow: 1;
+  }
+  
+  /* Navigation list */
+  nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center; /* Align items vertically in the center */
+  }
+  
+  /* Navigation list items */
+  nav ul li {
+    display: inline;
+  }
+  
+  /* Navigation links */
+  nav ul li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 20px; /* Adjust padding for better spacing */
+    text-decoration: none;
+  }
+  
+  /* Navigation links hover effect */
+  nav ul li a:hover {
+    background-color: #111;
+  }

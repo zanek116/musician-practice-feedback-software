@@ -19,6 +19,7 @@ To run (Mac):
         cd into musician-practice-feedback-software
         npm run dev
 
+** Code in dev branch (git checkout dev) and have someone check your commit before pushing to main **
 
 
 

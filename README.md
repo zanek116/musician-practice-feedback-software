@@ -11,12 +11,17 @@ To run (Mac):
     Install all dependencies
 
     Start Python (Flask) server: 
-        cd into backend
-        run source /venv/bin/activate
+        cd backend
+        python3 -m venv venv
+        cd venv/Scripts (windows)
+        .\activate (windows)
+        cd ../../ (windows)
+        pip install all imports in main.py (pip install name)
+        source /venv/bin/activate (mac)
         python3 main.py
 
     Run frontend
-        cd into musician-practice-feedback-software
+        cd musician-practice-feedback-software
         npm install
         npm run dev
 

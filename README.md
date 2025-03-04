@@ -1,5 +1,5 @@
 Front End: 
-
+    
     Dependencies: Typescript, react-router-dom (npm install these)
 
 Back End
@@ -17,6 +17,7 @@ To run (Mac):
 
     Run frontend
         cd into musician-practice-feedback-software
+        npm install
         npm run dev
 
 ** Code in dev branch (git checkout dev) and have someone check your commit before pushing to main **

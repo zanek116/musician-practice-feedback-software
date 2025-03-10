@@ -35,6 +35,9 @@ def normalize_audio(audio_data):
         return audio_data / max_amplitude
     return audio_data
 
+def smooth_audio(audio_data, window_size=5):
+    return np.convolve(audio_data, np.ones(window_size)/window_size, mode='valid')
+
 def set_baseline_noise_level():
     global baseline_noise_level
     # Open audio stream
@@ -68,7 +71,6 @@ def set_baseline_noise_level():
         stream.stop_stream()
         stream.close()
 
-# Record for 5 seconds and print pitches and dB levels for each 10 milliseconds
 def detect_pitch():
     global detected_pitch_levels, detected_noise_levels, baseline_noise_level, recorded_audio
     detected_pitch_levels = []  # Reset the pitch levels list
@@ -100,12 +102,18 @@ def detect_pitch():
         # Normalize the audio to 0 dB
         normalized_audio = normalize_audio(audio_data)
 
+        # Smooth the audio signal
+        smoothed_audio = smooth_audio(normalized_audio)
+
         # Process audio in 10-millisecond chunks for pitch and dB level detection
         chunk_size = int(SAMPLE_RATE * 0.01)  # 10 milliseconds
-        total_chunks = len(normalized_audio) // chunk_size
+        total_chunks = len(smoothed_audio) // chunk_size
 
-        for i in range(total_chunks):
-            chunk = normalized_audio[i * chunk_size:(i + 1) * chunk_size]
+        # Discard the first 5 chunks (50 milliseconds)
+        start_chunk = 5
+
+        for i in range(start_chunk, total_chunks):
+            chunk = smoothed_audio[i * chunk_size:(i + 1) * chunk_size]
 
             # Use librosa's piptrack function to detect pitch from the chunk
             pitches, magnitudes = librosa.core.piptrack(y=chunk, sr=SAMPLE_RATE)
@@ -118,10 +126,10 @@ def detect_pitch():
 
             # Print detected pitch to the console if the pitch is greater than zero
             if pitch > 0:
-                print(f"Pitch detected at {i * 10} ms: {pitch:.2f} Hz")
+                print(f"Pitch detected at {(i - start_chunk) * 10} ms: {pitch:.2f} Hz")
                 detected_pitch_levels.append(pitch)
             else:
-                print(f"No pitch detected at {i * 10} ms.")
+                print(f"No pitch detected at {(i - start_chunk) * 10} ms.")
                 detected_pitch_levels.append(None)
 
             # Calculate the RMS value for the chunk
@@ -133,12 +141,12 @@ def detect_pitch():
             if adjusted_db < 0:
                 adjusted_db = 0
 
-            print(f"dB level at {i * 10} ms: {adjusted_db:.2f} dB")
+            print(f"dB level at {(i - start_chunk) * 10} ms: {adjusted_db:.2f} dB")
             detected_noise_levels.append(adjusted_db)
 
         # Play back the recorded audio
         print("Playing back the recorded audio...")
-        sd.play(normalized_audio, SAMPLE_RATE)
+        sd.play(smoothed_audio, SAMPLE_RATE)
         sd.wait()  # Wait until the audio playback is finished
     except Exception as e:
         print(f"Error during pitch detection: {e}")

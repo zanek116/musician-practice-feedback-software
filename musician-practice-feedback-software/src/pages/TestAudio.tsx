@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './TestAudio.css';
 
 const TestAudio = () => {
-  const [pitch, setPitch] = useState<number | null>(null);
+  const [pitchLevels, setPitchLevels] = useState<(number | null)[]>([]);
   const [noiseLevels, setNoiseLevels] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [recording, setRecording] = useState(false);
   const [message, setMessage] = useState('');
   const [calibrated, setCalibrated] = useState(false);
-  const [showSaveButton, setShowSaveButton] = useState(false);
 
   useEffect(() => {
     // Automatically calibrate the baseline noise level when the component mounts
@@ -37,7 +36,7 @@ const TestAudio = () => {
 
     try {
       setRecording(true);
-      setPitch(null); // Clear the previous pitch value
+      setPitchLevels([]); // Clear the previous pitch levels
       setNoiseLevels([]); // Clear the previous noise levels
       setMessage('Recording for...');
       setCountdown(5);
@@ -58,11 +57,11 @@ const TestAudio = () => {
 
       // Wait for a short period to allow pitch and noise level detection to complete
       setTimeout(async () => {
-        // Fetch the detected pitch
+        // Fetch the detected pitch levels
         const pitchResponse = await fetch('http://localhost:8080/pitch');
         const pitchData = await pitchResponse.json();
         console.log('Pitch response:', pitchData);
-        setPitch(pitchData.pitch);
+        setPitchLevels(pitchData.pitch_levels);
 
         // Fetch the detected noise levels
         const noiseResponse = await fetch('http://localhost:8080/noise');
@@ -71,33 +70,10 @@ const TestAudio = () => {
         setNoiseLevels(noiseData.noise_levels);
 
         setRecording(false);
-        setShowSaveButton(true);
       }, 2000); // Wait for 2 seconds to ensure pitch and noise level detection is complete
     } catch (error) {
       console.error('Error fetching the API message:', error);
       setRecording(false);
-    }
-  };
-
-  const handleSaveRecording = async () => {
-    const filename = prompt('Enter a filename for the recording:', 'recording.wav');
-    if (filename) {
-      try {
-        const response = await fetch('http://localhost:8080/save_recording', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ filename }),
-        });
-        const data = await response.json();
-        console.log('Save recording response:', data);
-        setMessage('Recording saved successfully.');
-        setShowSaveButton(false);
-      } catch (error) {
-        console.error('Error saving recording:', error);
-        setMessage('Failed to save recording.');
-      }
     }
   };
 
@@ -109,19 +85,15 @@ const TestAudio = () => {
       </button>
       {message && <p>{message}</p>}
       {countdown !== null && <p>{countdown}... seconds</p>}
-      {pitch !== null && <p>Detected Pitch: {pitch} Hz</p>}
-      {noiseLevels.length > 0 && (
+      {pitchLevels.length > 0 && noiseLevels.length > 0 && (
         <div>
-          <h2>Detected Noise Levels:</h2>
-          {noiseLevels.map((level, index) => (
-            <p key={index}>Millisecond {index + 1}: {level} dB</p>
+          <h2>Detected Pitch and Noise Levels:</h2>
+          {pitchLevels.map((pitch, index) => (
+            <p key={index}>
+              Millisecond {index + 1}: Pitch: {pitch !== null ? pitch.toFixed(2) : 'N/A'} Hz, dB: {noiseLevels[index].toFixed(2)}
+            </p>
           ))}
         </div>
-      )}
-      {showSaveButton && (
-        <button onClick={handleSaveRecording} className="save-button">
-          Save Recording
-        </button>
       )}
     </div>
   );

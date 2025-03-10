@@ -1,9 +1,10 @@
+import os
 import pyaudio
 import numpy as np
 import librosa
 import sounddevice as sd
 import soundfile as sf
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import threading
 
@@ -34,9 +35,6 @@ def normalize_audio(audio_data):
     if max_amplitude > 0:
         return audio_data / max_amplitude
     return audio_data
-
-def smooth_audio(audio_data, window_size=5):
-    return np.convolve(audio_data, np.ones(window_size)/window_size, mode='valid')
 
 def set_baseline_noise_level():
     global baseline_noise_level
@@ -102,18 +100,15 @@ def detect_pitch():
         # Normalize the audio to 0 dB
         normalized_audio = normalize_audio(audio_data)
 
-        # Smooth the audio signal
-        smoothed_audio = smooth_audio(normalized_audio)
-
         # Process audio in 10-millisecond chunks for pitch and dB level detection
         chunk_size = int(SAMPLE_RATE * 0.01)  # 10 milliseconds
-        total_chunks = len(smoothed_audio) // chunk_size
+        total_chunks = len(normalized_audio) // chunk_size
 
         # Discard the first 5 chunks (50 milliseconds)
         start_chunk = 5
 
         for i in range(start_chunk, total_chunks):
-            chunk = smoothed_audio[i * chunk_size:(i + 1) * chunk_size]
+            chunk = normalized_audio[i * chunk_size:(i + 1) * chunk_size]
 
             # Use librosa's piptrack function to detect pitch from the chunk
             pitches, magnitudes = librosa.core.piptrack(y=chunk, sr=SAMPLE_RATE)
@@ -146,7 +141,7 @@ def detect_pitch():
 
         # Play back the recorded audio
         print("Playing back the recorded audio...")
-        sd.play(smoothed_audio, SAMPLE_RATE)
+        sd.play(normalized_audio, SAMPLE_RATE)
         sd.wait()  # Wait until the audio playback is finished
     except Exception as e:
         print(f"Error during pitch detection: {e}")
@@ -188,6 +183,31 @@ def calibrate_baseline():
     thread.daemon = True
     thread.start()
     return jsonify({"message": "Baseline noise level calibration started"})
+
+@app.route('/save_recording', methods=['POST'])
+def save_recording():
+    global recorded_audio
+    filename = request.json.get('filename', 'recording.wav')
+    filepath = os.path.join('recordings', filename)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    sf.write(filepath, np.array(recorded_audio), SAMPLE_RATE)
+    return jsonify({"message": "Recording saved", "filepath": filepath})
+
+@app.route('/recordings', methods=['GET'])
+def list_recordings():
+    recordings = []
+    recordings_dir = 'recordings'
+    if not os.path.exists(recordings_dir):
+        os.makedirs(recordings_dir)
+    for root, dirs, files in os.walk(recordings_dir):
+        for file in files:
+            if file.endswith('.wav'):
+                recordings.append(file)
+    return jsonify({"recordings": recordings})
+
+@app.route('/recordings/<filename>', methods=['GET'])
+def get_recording(filename):
+    return send_from_directory('recordings', filename)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

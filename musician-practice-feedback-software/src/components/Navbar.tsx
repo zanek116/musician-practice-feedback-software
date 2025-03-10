@@ -14,7 +14,7 @@ const Navbar = () => {
             <Link to="/songs">Songs</Link>
           </li>
           <li>
-            <Link to="/dashboard">Dashboard</Link>
+            <Link to="/recordings">Recordings</Link>
           </li>
           <li>
             <Link to="/test">Test Audio</Link>

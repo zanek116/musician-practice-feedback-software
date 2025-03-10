@@ -77,6 +77,27 @@ const TestAudio = () => {
     }
   };
 
+  const handleSaveRecording = async () => {
+    const filename = prompt('Enter a filename for the recording:', 'recording');
+    if (filename) {
+      try {
+        const response = await fetch('http://localhost:8080/save_recording', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ filename: `${filename}.wav` }),
+        });
+        const data = await response.json();
+        console.log('Save recording response:', data);
+        setMessage('Recording saved successfully.');
+      } catch (error) {
+        console.error('Error saving recording:', error);
+        setMessage('Failed to save recording.');
+      }
+    }
+  };
+
   return (
     <div className="test-audio-container">
       <h1>Testing</h1>
@@ -95,6 +116,9 @@ const TestAudio = () => {
           ))}
         </div>
       )}
+      <button onClick={handleSaveRecording} className="save-button">
+        Save Recording
+      </button>
     </div>
   );
 };

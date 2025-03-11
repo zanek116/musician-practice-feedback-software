@@ -1,0 +1,19 @@
+.home-container {
+    height: 100vh; /* Make it cover the full viewport */
+    background-color: #94e9f9; /* Change to any color */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+  }
+  
+  .home-title {
+    font-size: 2.5rem;
+    /* color: #4CAF50; */
+    margin-bottom: 10px;
+  }
+  
+  .home-description {
+    font-size: 1.2rem;
+    color: #333;
+  }

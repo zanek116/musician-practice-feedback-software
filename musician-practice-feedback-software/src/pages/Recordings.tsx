@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './Recordings.css';
 
 const Recordings = () => {
   const [recordings, setRecordings] = useState<string[]>([]);
@@ -24,13 +25,14 @@ const Recordings = () => {
 
   return (
     <div className="recordings-container">
-      <h1>Recordings</h1>
       <h2>Saved Recordings:</h2>
-      {recordings.map((recording, index) => (
-        <button key={index} onClick={() => handlePlayRecording(recording)}>
-          {recording}
-        </button>
-      ))}
+      <div className="recordings-list">
+        {recordings.map((recording, index) => (
+          <button key={index} onClick={() => handlePlayRecording(recording)} className="recording-button">
+            {recording}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

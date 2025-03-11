@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Songs from './pages/Songs';
 import TestAudio from './pages/TestAudio';
 import Recordings from './pages/Recordings';
+import Score from './pages/Score';
 
 
 function App() {
@@ -15,9 +16,10 @@ function App() {
         <Route path="/recordings" element={<Recordings />} />
         <Route path="/songs" element={<Songs />} />
         <Route path="/test" element={<TestAudio />} />
+        <Route path="/score" element={<Score />} />
       </Routes>
     </Router>
   );
 };
 
-export default App;
+export default App

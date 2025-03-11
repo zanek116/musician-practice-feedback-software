@@ -22,6 +22,8 @@ detected_pitch_levels = []
 detected_noise_levels = []
 baseline_noise_level = None
 recorded_audio = []
+recording = False
+recording_thread = None
 
 def calculate_rms(audio_data):
     return np.sqrt(np.mean(np.square(audio_data)))
@@ -32,7 +34,7 @@ def calculate_db(rms, reference_level=1):
 
 def normalize_audio(audio_data):
     max_amplitude = np.max(np.abs(audio_data))
-    if max_amplitude > 0:
+    if (max_amplitude > 0):
         return audio_data / max_amplitude
     return audio_data
 
@@ -70,7 +72,7 @@ def set_baseline_noise_level():
         stream.close()
 
 def detect_pitch():
-    global detected_pitch_levels, detected_noise_levels, baseline_noise_level, recorded_audio
+    global detected_pitch_levels, detected_noise_levels, baseline_noise_level, recorded_audio, recording
     detected_pitch_levels = []  # Reset the pitch levels list
     detected_noise_levels = []  # Reset the noise levels list
     recorded_audio = []  # Reset the recorded audio
@@ -86,62 +88,53 @@ def detect_pitch():
                     input=True,
                     frames_per_buffer=BUFFER_SIZE)
     try:
-        # Record audio for 5 seconds
-        print("Recording for 5 seconds...")
-        frames = []
-        for _ in range(0, int(SAMPLE_RATE / BUFFER_SIZE * 5)):
+        print("Recording started...")
+        while recording:
             data = stream.read(BUFFER_SIZE, exception_on_overflow=False)
-            frames.append(data)
+            recorded_audio.extend(np.frombuffer(data, dtype=np.float32))
 
-        # Convert recorded frames into a numpy array
-        audio_data = np.frombuffer(b''.join(frames), dtype=np.float32)
-        recorded_audio.extend(audio_data)
+            # Normalize the audio to 0 dB
+            normalized_audio = normalize_audio(np.frombuffer(data, dtype=np.float32))
 
-        # Normalize the audio to 0 dB
-        normalized_audio = normalize_audio(audio_data)
+            # Process audio in 10-millisecond chunks for pitch and dB level detection
+            chunk_size = int(SAMPLE_RATE * 0.01)  # 10 milliseconds
+            total_chunks = len(normalized_audio) // chunk_size
 
-        # Process audio in 10-millisecond chunks for pitch and dB level detection
-        chunk_size = int(SAMPLE_RATE * 0.01)  # 10 milliseconds
-        total_chunks = len(normalized_audio) // chunk_size
+            for i in range(total_chunks):
+                chunk = normalized_audio[i * chunk_size:(i + 1) * chunk_size]
 
-        # Discard the first 5 chunks (50 milliseconds)
-        start_chunk = 5
+                # Use librosa's piptrack function to detect pitch from the chunk
+                pitches, magnitudes = librosa.core.piptrack(y=chunk, sr=SAMPLE_RATE)
 
-        for i in range(start_chunk, total_chunks):
-            chunk = normalized_audio[i * chunk_size:(i + 1) * chunk_size]
+                # Find the index of the maximum magnitude in the magnitude matrix
+                index = magnitudes.argmax()
 
-            # Use librosa's piptrack function to detect pitch from the chunk
-            pitches, magnitudes = librosa.core.piptrack(y=chunk, sr=SAMPLE_RATE)
+                # Get the corresponding pitch value at that index
+                pitch = pitches.flatten()[index]  # Use flatten() to access the pitch as a 1D array
 
-            # Find the index of the maximum magnitude in the magnitude matrix
-            index = magnitudes.argmax()
+                # Print detected pitch to the console if the pitch is greater than zero
+                if pitch > 0:
+                    print(f"Pitch detected at {i * 10} ms: {pitch:.2f} Hz")
+                    detected_pitch_levels.append(pitch)
+                else:
+                    print(f"No pitch detected at {i * 10} ms.")
+                    detected_pitch_levels.append(None)
 
-            # Get the corresponding pitch value at that index
-            pitch = pitches.flatten()[index]  # Use flatten() to access the pitch as a 1D array
+                # Calculate the RMS value for the chunk
+                rms = calculate_rms(chunk)
+                db_level = calculate_db(rms)
 
-            # Print detected pitch to the console if the pitch is greater than zero
-            if pitch > 0:
-                print(f"Pitch detected at {(i - start_chunk) * 10} ms: {pitch:.2f} Hz")
-                detected_pitch_levels.append(pitch)
-            else:
-                print(f"No pitch detected at {(i - start_chunk) * 10} ms.")
-                detected_pitch_levels.append(None)
+                # Adjust the dB level based on the baseline noise level
+                adjusted_db = db_level - baseline_noise_level
+                if adjusted_db < 0:
+                    adjusted_db = 0
 
-            # Calculate the RMS value for the chunk
-            rms = calculate_rms(chunk)
-            db_level = calculate_db(rms)
-
-            # Adjust the dB level based on the baseline noise level
-            adjusted_db = db_level - baseline_noise_level
-            if adjusted_db < 0:
-                adjusted_db = 0
-
-            print(f"dB level at {(i - start_chunk) * 10} ms: {adjusted_db:.2f} dB")
-            detected_noise_levels.append(adjusted_db)
+                print(f"dB level at {i * 10} ms: {adjusted_db:.2f} dB")
+                detected_noise_levels.append(adjusted_db)
 
         # Play back the recorded audio
         print("Playing back the recorded audio...")
-        sd.play(normalized_audio, SAMPLE_RATE)
+        sd.play(np.array(recorded_audio), SAMPLE_RATE)
         sd.wait()  # Wait until the audio playback is finished
     except Exception as e:
         print(f"Error during pitch detection: {e}")
@@ -172,10 +165,26 @@ def get_noise():
 
 @app.route('/start_pitch_detection', methods=['GET'])
 def start_pitch_detection():
-    thread = threading.Thread(target=detect_pitch)
-    thread.daemon = True
-    thread.start()
-    return jsonify({"message": "Pitch detection started"})
+    global recording, recording_thread
+    if not recording:
+        recording = True
+        recording_thread = threading.Thread(target=detect_pitch)
+        recording_thread.daemon = True
+        recording_thread.start()
+        return jsonify({"message": "Pitch detection started"})
+    else:
+        return jsonify({"message": "Pitch detection is already running"})
+
+@app.route('/stop_pitch_detection', methods=['GET'])
+def stop_pitch_detection():
+    global recording
+    if recording:
+        recording = False
+        if recording_thread:
+            recording_thread.join()
+        return jsonify({"message": "Pitch detection stopped"})
+    else:
+        return jsonify({"message": "Pitch detection is not running"})
 
 @app.route('/calibrate_baseline', methods=['GET'])
 def calibrate_baseline():

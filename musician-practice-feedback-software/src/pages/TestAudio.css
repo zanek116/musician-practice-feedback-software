@@ -26,6 +26,21 @@ button {
 .record-button {
   background-color: #007bff;
   color: white;
+  display: flex;
+  align-items: center;
+}
+
+.record-button .record-icon {
+  width: 12px;
+  height: 12px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background-color: red;
+  transition: background-color 0.3s ease;
+}
+
+.record-button .record-icon.recording {
+  background-color: green;
 }
 
 .record-button:disabled {

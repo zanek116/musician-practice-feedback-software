@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './Recordings.css'
 
 const Recordings = () => {
   const [recordings, setRecordings] = useState<string[]>([]);
@@ -24,8 +25,8 @@ const Recordings = () => {
 
   return (
     <div className="recordings-container">
-      <h1>Recordings</h1>
-      <h2>Saved Recordings:</h2>
+      <h1 className="recordings-title">Recordings</h1>
+      <p className="recordings-description">Saved Recordings:</p>
       {recordings.map((recording, index) => (
         <button key={index} onClick={() => handlePlayRecording(recording)}>
           {recording}

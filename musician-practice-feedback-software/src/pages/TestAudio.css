@@ -1,29 +1,86 @@
 .test-audio-container {
-    text-align: center;
-    margin-top: 50px;
-  }
-  
-  .record-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .record-button:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  .record-button:hover:not(:disabled) {
-    background-color: #0056b3;
-  }
-  
-  p {
-    font-size: 18px;
-    margin-top: 20px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #333;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.record-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.record-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.save-button {
+  background-color: #28a745;
+  color: white;
+}
+
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.message, .countdown {
+  font-size: 18px;
+  color: #555;
+}
+
+.results {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.results h2 {
+  color: #333;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.result-time, .result-pitch, .result-noise {
+  flex: 1;
+  text-align: center;
+}
+
+.result-time {
+  color: #555;
+}
+
+.result-pitch {
+  color: #007bff;
+}
+
+.result-noise {
+  color: #28a745;
+}

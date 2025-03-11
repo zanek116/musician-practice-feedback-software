@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
-import {OpenSheetMusicDisplay} from 'opensheetmusicdisplay';
-
-
+import React, { useEffect, useRef } from 'react';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 
 const Score = () => {
-  let osmd: OpenSheetMusicDisplay;
+  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
+
   useEffect(() => {
     const doc = `<?xml version="1.0" encoding="UTF-16"?>
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
@@ -4840,33 +4839,45 @@ const Score = () => {
   <!--=========================================================-->
 </score-partwise>
 `
-    osmd = new OpenSheetMusicDisplay("osmdContainer");
-    osmd.setOptions({
-      backend: "svg",
-      drawTitle: true,
-      // drawingParameters: "compacttight" // don't display title, composer etc., smaller margins
-    });
-    osmd
-      .load(doc)
-      .then(() => {
-        osmd.render();
-        afterRender();
-      });
-  }, []);
-
-  function afterRender() {
-    let cursor = osmd.cursor;
-    cursor.show();
-    cursor.next();
-    const cursorVoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
-    const baseNote = cursorVoiceEntry.Notes[0];
-
-
-    osmd.setOptions({ autoResize: true });
+osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
+osmdRef.current.setOptions({
+  backend: "svg",
+  drawTitle: true,
+  autoResize: true,
+});
+osmdRef.current.load(doc).then(() => {
+  if (osmdRef.current) {
+    osmdRef.current.render();
   }
-  return (
-    <div id="osmdContainer"/>
-  );
+});
+}, []);
+
+function afterRender() {
+if (!osmdRef.current) return;
+const cursor = osmdRef.current.cursor;
+cursor.reset(); // Ensure the cursor starts at the beginning
+cursor.show();
+
+const duration = 100 * 1000; // 10 seconds in milliseconds
+const totalSteps = 500; // Increase the number of steps for smoother scrolling
+const updateInterval = duration / totalSteps; // Interval between each step
+
+let currentStep = 0;
+const interval = setInterval(() => {
+  cursor.next();
+  currentStep++;
+  if (cursor.Iterator.EndReached || currentStep >= totalSteps) {
+    clearInterval(interval);
+  }
+}, updateInterval);
+}
+
+return (
+<div>
+  <button onClick={afterRender}>Start</button>
+  <div id="osmdContainer" style={{ height: '100vh', overflowY: 'auto' }} />
+</div>
+);
 };
 
 export default Score;

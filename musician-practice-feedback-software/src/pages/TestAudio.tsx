@@ -10,7 +10,6 @@ const TestAudio = () => {
   const [calibrated, setCalibrated] = useState(false);
 
   useEffect(() => {
-    // Automatically calibrate the baseline noise level when the component mounts
     const calibrateBaseline = async () => {
       try {
         setMessage('Calibrating baseline noise level...');
@@ -36,17 +35,15 @@ const TestAudio = () => {
 
     try {
       setRecording(true);
-      setPitchLevels([]); // Clear the previous pitch levels
-      setNoiseLevels([]); // Clear the previous noise levels
+      setPitchLevels([]);
+      setNoiseLevels([]);
       setMessage('Recording for...');
       setCountdown(5);
 
-      // Start pitch detection
       const startPitchResponse = await fetch('http://localhost:8080/start_pitch_detection');
       const startPitchData = await startPitchResponse.json();
       console.log('Start pitch detection response:', startPitchData);
 
-      // Countdown timer
       for (let i = 5; i > 0; i--) {
         setCountdown(i);
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -55,22 +52,19 @@ const TestAudio = () => {
       setCountdown(null);
       setMessage('Playing back recording:');
 
-      // Wait for a short period to allow pitch and noise level detection to complete
       setTimeout(async () => {
-        // Fetch the detected pitch levels
         const pitchResponse = await fetch('http://localhost:8080/pitch');
         const pitchData = await pitchResponse.json();
         console.log('Pitch response:', pitchData);
         setPitchLevels(pitchData.pitch_levels);
 
-        // Fetch the detected noise levels
         const noiseResponse = await fetch('http://localhost:8080/noise');
         const noiseData = await noiseResponse.json();
         console.log('Noise response:', noiseData);
         setNoiseLevels(noiseData.noise_levels);
 
         setRecording(false);
-      }, 2000); // Wait for 2 seconds to ensure pitch and noise level detection is complete
+      }, 2000);
     } catch (error) {
       console.error('Error fetching the API message:', error);
       setRecording(false);
@@ -104,14 +98,16 @@ const TestAudio = () => {
       <button onClick={handleClick} disabled={recording || !calibrated} className="record-button">
         {recording ? 'Recording...' : 'Click me!'}
       </button>
-      {message && <p>{message}</p>}
-      {countdown !== null && <p>{countdown}... seconds</p>}
+      {message && <p className="message">{message}</p>}
+      {countdown !== null && <p className="countdown">{countdown}... seconds</p>}
       {pitchLevels.length > 0 && noiseLevels.length > 0 && (
-        <div>
+        <div className="results">
           <h2>Detected Pitch and Noise Levels:</h2>
           {pitchLevels.map((pitch, index) => (
-            <p key={index}>
-              Millisecond {index + 1}: Pitch: {pitch !== null ? pitch.toFixed(2) : 'N/A'} Hz, dB: {noiseLevels[index].toFixed(2)}
+            <p key={index} className="result-item">
+              <span className="result-time">Millisecond {index + 1}:</span>
+              <span className="result-pitch">Pitch: {pitch !== null ? pitch.toFixed(2) : 'N/A'} Hz</span>
+              <span className="result-noise">dB: {noiseLevels[index].toFixed(2)}</span>
             </p>
           ))}
         </div>

@@ -1,1066 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Fraction, OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import io from 'socket.io-client';
 import './Songs.css';
+import { doc } from './musicXML';
+
+const socket = io('http://localhost:1111'); // Connect to the backend WebSocket
 
 const Songs = () => {
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
+  const [feedback, setFeedback] = useState<string[]>([]);
+  const [recordingStatus, setRecordingStatus] = useState<string>('stopped');
+  const [countdown, setCountdown] = useState<string | number | null>(null);
+  const [isRecording, setIsRecording] = useState(false); // Manage recording state
+  const [isCursorMoving, setIsCursorMoving] = useState(false); // Track cursor movement state
+  const [showFeedback, setShowFeedback] = useState(false); // Control feedback visibility
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Track the active timeout
 
   useEffect(() => {
-    const doc = `<?xml version="1.0" encoding="UTF-16"?>
-<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
-<score-partwise>
-    <movement-title>Loch Lomond</movement-title>
-    <identification>
-        <creator type="composer">Trad.</creator>
-        <encoding>
-            <encoder>abc2xml version 63</encoder>
-            <encoding-date>2025-04-02</encoding-date>
-        </encoding>
-    </identification>
-    <part-list>
-        <score-part id="P1">
-            <part-name />
-        </score-part>
-    </part-list>
-    <part id="P1">
-        <measure number="1">
-            <attributes>
-                <divisions>120</divisions>
-                <key>
-                    <fifths>1</fifths>
-                    <mode>major</mode>
-                </key>
-                <time>
-                    <beats>4</beats>
-                    <beat-type>4</beat-type>
-                </time>
-            </attributes>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <notations>
-                    <slur number="1" type="start" />
-                </notations>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>1. By</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>2. I</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>3. The</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <notations>
-                    <slur number="1" type="stop" />
-                </notations>
-            </note>
-        </measure>
-        <measure number="2">
-            <harmony>
-                <root>
-                    <root-step>G</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>yon</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>mind</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>wee</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>bon</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>where</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>bird</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>A</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>nie</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>we</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>may</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="3">
-            <harmony>
-                <root>
-                    <root-step>E</root-step>
-                </root>
-                <kind>minor</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>banks</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>part</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>sing</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>and</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>ed</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>and</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>A</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>by</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>on</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="4">
-            <harmony>
-                <root>
-                    <root-step>C</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>yon</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>yon</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>wild</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>bon</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>sha</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>flow</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>nie</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>dy</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>ers</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="5">
-            <harmony>
-                <root>
-                    <root-step>D</root-step>
-                </root>
-                <kind>dominant</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>braes</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>glen,</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>spring,</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>where</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>On</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>And</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>in</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="6">
-            <harmony>
-                <root>
-                    <root-step>G</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>sun</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>steep,</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>sun</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>shines</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>steep</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>shine the</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="7">
-            <harmony>
-                <root>
-                    <root-step>E</root-step>
-                </root>
-                <kind>minor</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>bright</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>side</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>wa</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>on</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>o'</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>ters</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>Loch</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>Ben</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>are</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="8">
-            <harmony>
-                <root>
-                    <root-step>C</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>480</duration>
-                <voice>1</voice>
-                <type>whole</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>Lo</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>Lo</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>sleep</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="9">
-            <harmony>
-                <root>
-                    <root-step>D</root-step>
-                </root>
-                <kind>dominant</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>mond,</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>mond,</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>ing:</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>Where</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>Where</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>The</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="10">
-            <harmony>
-                <root>
-                    <root-step>C</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>me</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>in</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>broken</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>and</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>pur</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>heart</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>my</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>ple</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>will</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="11">
-            <harmony>
-                <root>
-                    <root-step>G</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>true</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>hue,</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>ken</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>love</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>nae</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>were</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="12">
-            <harmony>
-                <root>
-                    <root-step>A</root-step>
-                </root>
-                <kind>minor</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>C</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>ev</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>Hei</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>se</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>er</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>land</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>cond</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>A</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>wont</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>hills</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>spring</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>to</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>we</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>a</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="13">
-            <harmony>
-                <root>
-                    <root-step>D</root-step>
-                </root>
-                <kind>dominant</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>go,</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>view,</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>gain,</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>on</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>And</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>And</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="14">
-            <harmony>
-                <root>
-                    <root-step>G</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>bonnie</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>moon</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>world</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>bon</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>shin</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>does</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>nie</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>in'</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>not</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="15">
-            <harmony>
-                <root>
-                    <root-step>C</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>E</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>banks</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>out</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>know</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>D</step>
-                    <octave>5</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>of</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>from</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>how</text>
-                </lyric>
-            </note>
-            <note>
-                <pitch>
-                    <step>B</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>120</duration>
-                <voice>1</voice>
-                <type>quarter</type>
-                <lyric number="1">
-                    <syllabic>single</syllabic>
-                    <text>Loch</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>single</syllabic>
-                    <text>the</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>single</syllabic>
-                    <text>we're</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="16">
-            <harmony>
-                <root>
-                    <root-step>D</root-step>
-                </root>
-                <kind>dominant</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>A</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>480</duration>
-                <voice>1</voice>
-                <type>whole</type>
-                <lyric number="1">
-                    <syllabic>begin</syllabic>
-                    <text>Lo</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>begin</syllabic>
-                    <text>gloam</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>begin</syllabic>
-                    <text>griev</text>
-                </lyric>
-            </note>
-        </measure>
-        <measure number="17">
-            <harmony>
-                <root>
-                    <root-step>G</root-step>
-                </root>
-                <kind>major</kind>
-            </harmony>
-            <note>
-                <pitch>
-                    <step>G</step>
-                    <octave>4</octave>
-                </pitch>
-                <duration>240</duration>
-                <voice>1</voice>
-                <type>half</type>
-                <lyric number="1">
-                    <syllabic>end</syllabic>
-                    <text>mond.</text>
-                </lyric>
-                <lyric number="2">
-                    <syllabic>end</syllabic>
-                    <text>in'.</text>
-                </lyric>
-                <lyric number="3">
-                    <syllabic>end</syllabic>
-                    <text>in'.</text>
-                </lyric>
-            </note>
-            <barline location="right">
-                <bar-style>light-heavy</bar-style>
-            </barline>
-        </measure>
-    </part>
-</score-partwise>
-`;
-
-osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
+    // Initialize OpenSheetMusicDisplay
+    osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
     osmdRef.current.setOptions({
       backend: "svg",
       drawTitle: true,
@@ -1071,29 +29,89 @@ osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
         osmdRef.current.render();
       }
     });
+
+    // Listen for feedback messages from the backend
+    socket.on('note_feedback', (data) => {
+      setFeedback((prevFeedback) => [...prevFeedback, data.message]);
+    });
+
+    // Listen for recording status updates
+    socket.on('recording_status', (data) => {
+      setRecordingStatus(data.status);
+    });
+
+    // Listen for countdown updates
+    socket.on('countdown', (data) => {
+      setCountdown(data.count);
+
+      // Start the cursor movement when countdown reaches zero
+      if (data.count === "Go!") {
+        afterRender();
+      }
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socket.off('note_feedback');
+      socket.off('recording_status');
+      socket.off('countdown');
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current); // Clear any active timeout
+      }
+    };
   }, []);
 
+  const startRecording = () => {
+    setFeedback([]); // Clear previous feedback
+    setCountdown(null); // Reset countdown
+    setShowFeedback(false); // Hide feedback while recording
+    socket.emit('start_recording');
+    setIsRecording(true); // Disable the Start button
+  };
+
+  const stopRecording = () => {
+    socket.emit('stop_recording');
+    setIsRecording(false); // Enable the Start button
+    setShowFeedback(true); // Show feedback after stopping recording
+    if (osmdRef.current) {
+      const cursor = osmdRef.current.cursor;
+      cursor.reset(); // Reset the cursor to the beginning
+      cursor.hide(); // Hide the cursor
+    }
+    setIsCursorMoving(false); // Mark cursor as stopped
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current); // Clear any active timeout
+      timeoutRef.current = null;
+    }
+  };
+
   function afterRender() {
-    if (!osmdRef.current) return;
+    if (!osmdRef.current || isCursorMoving) return; // Prevent multiple loops
+    setIsCursorMoving(true); // Mark cursor as moving
+
     const cursor = osmdRef.current.cursor;
     cursor.reset(); // Ensure the cursor starts at the beginning
     cursor.show();
-  
+
+    // Enable followCursor to scroll with the cursor
+    osmdRef.current.FollowCursor = true;
+
     const bpm = 120; // Set the desired BPM
     const beatDuration = 60000 / bpm; // Duration of a quarter note in milliseconds (60000 ms = 1 minute)
-  
+
     const moveCursor = () => {
       if (cursor.Iterator.EndReached) {
         cursor.hide();
+        setIsCursorMoving(false); // Mark cursor as stopped
         return;
       }
-  
+
       // Get the current note's type and adjust the duration
       const notes = cursor.NotesUnderCursor();
       if (notes && notes.length > 0) {
         const noteType = notes[0].TypeLength; // Get the note type (e.g., "quarter", "half", "whole")
         let noteDurationMs = beatDuration; // Default to quarter note duration
-  
+
         // Adjust the duration based on the note type
         if (noteType.Equals(new Fraction(2, 4))) {
           noteDurationMs = beatDuration * 2; // Half note lasts twice as long as a quarter note
@@ -1101,28 +119,48 @@ osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
         if (noteType.Equals(new Fraction(4, 4))) {
           noteDurationMs = beatDuration * 4; // Whole note lasts four times as long as a quarter note
         }
-  
+
         // Move the cursor to the next note after the calculated duration
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           cursor.next();
           moveCursor(); // Recursively call to handle the next note
         }, noteDurationMs);
       } else {
         // If no notes are found, just move to the next position
-        cursor.next();
-        moveCursor(); // Recursively call to handle the next position
+        timeoutRef.current = setTimeout(() => {
+          cursor.next();
+          moveCursor(); // Recursively call to handle the next position
+        }, beatDuration);
       }
     };
-  
+
     moveCursor(); // Start the cursor movement
   }
 
   return (
     <div className="songs-container">
       <h1>Music Score</h1>
-      <button onClick={afterRender} className="start-button">
-        <span className="play-icon">&#9658;</span> Start
-      </button>
+      <div>
+        <button
+          onClick={startRecording}
+          className="start-button"
+          disabled={isRecording} // Disable the button if recording is in progress
+        >
+          <span className="play-icon">&#9658;</span> Start
+        </button>
+        <button onClick={stopRecording} className="stop-button">
+          Stop
+        </button>
+      </div>
+      <div>
+        {countdown !== null && <h2>{countdown}</h2>}
+      </div>
+      <div>
+        {showFeedback && // Only display feedback if showFeedback is true
+          feedback.map((message, index) => (
+            <p key={index}>{message}</p>
+          ))}
+      </div>
       <div id="osmdContainer" className="osmd-container" />
     </div>
   );

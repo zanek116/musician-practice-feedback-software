@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import io from 'socket.io-client';
 
 const socket = io('http://localhost:1111'); // Connect to the backend WebSocket
 
-const TestAudio: React.FC = () => {
+const TestAudio = forwardRef((props, ref) => {
     const [feedback, setFeedback] = useState<string[]>([]);
     const [recordingStatus, setRecordingStatus] = useState<string>('stopped');
     const [countdown, setCountdown] = useState<string | number | null>(null);
@@ -42,16 +42,15 @@ const TestAudio: React.FC = () => {
         socket.emit('stop_recording');
     };
 
+    // Expose startRecording and stopRecording to the parent component
+    useImperativeHandle(ref, () => ({
+        startRecording,
+        stopRecording,
+    }));
+
     return (
         <div>
-            <h1>Musician Practice Feedback</h1>
             <div>
-                <button onClick={startRecording} disabled={recordingStatus === 'started'}>
-                    Start Recording
-                </button>
-                <button onClick={stopRecording} disabled={recordingStatus === 'stopped'}>
-                    Stop Recording
-                </button>
             </div>
             <div>
                 {countdown !== null && <h2>{countdown}</h2>}
@@ -63,6 +62,6 @@ const TestAudio: React.FC = () => {
             </div>
         </div>
     );
-};
+});
 
 export default TestAudio;

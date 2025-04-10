@@ -1,19 +1,24 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, emit
 import numpy as np
 import pyaudio
 import json
 import time
 from scipy.signal import butter, lfilter
+from flask_cors import CORS
 import os
 import threading
+from music21 import converter, note, chord
 
 app = Flask(__name__)
+CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Global variables to control the recording process
 recording_thread = None
 is_recording = False
+played_notes_list = []  # List to store played notes
+
 
 ######################################################################
 # Constants for pitch detection
@@ -58,6 +63,8 @@ def harmonic_product_spectrum(fft, num_harmonics=5):
 ######################################################################
 # Function to check if a played note matches the expected note
 def check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=150):
+
+
     for i, expected_note in enumerate(expected_notes):
         if i in processed_notes:
             continue
@@ -76,7 +83,7 @@ def check_note_accuracy(played_note, played_time, expected_notes, processed_note
 ######################################################################
 # Audio processing function
 def audio_processing():
-    global is_recording
+    global is_recording, feedback_list
 
     try:
         json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
@@ -128,6 +135,8 @@ def audio_processing():
             # Get the note name
             played_note = note_name(n0)
 
+            played_notes_list.append({"note": played_note})
+
             # Compare the detected note with the expected notes
             result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=100)
             if result:
@@ -161,13 +170,103 @@ def start_recording():
         recording_thread.start()
         emit('recording_status', {'status': 'started'})
 
+@socketio.on('send_sheet_music')
+def handle_sheet_music(data):
+    try:
+        # Save the received sheet music to a file with UTF-16 encoding
+        file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
+        with open(file_path, 'w', encoding='utf-16') as f:
+            f.write(data['doc'])  # Save the MusicXML content
+
+        print("Sheet music received and saved.")
+
+        # Parse the MusicXML file and generate expected notes
+        expected_notes = []
+        # Open the file with UTF-16 encoding for parsing
+        score = converter.parse(file_path, encoding='utf-16')
+        current_time = 0.0  # Start time in milliseconds
+
+        for element in score.flat.notes:
+            if isinstance(element, note.Note):
+                note_name = element.nameWithOctave
+                duration_ms = element.quarterLength * 1000  # Convert quarter length to milliseconds
+                expected_notes.append({
+                    "note": note_name,
+                    "start_time": current_time,
+                    "end_time": current_time + duration_ms,
+                    "correct": False  # Initialize as incorrect
+                })
+                current_time += duration_ms
+            elif isinstance(element, chord.Chord):
+                chord_notes = [n.nameWithOctave for n in element.notes]
+                duration_ms = element.quarterLength * 1000  # Convert quarter length to milliseconds
+                for chord_note in chord_notes:
+                    expected_notes.append({
+                        "note": chord_note,
+                        "start_time": current_time,
+                        "end_time": current_time + duration_ms,
+                        "correct": False  # Initialize as incorrect
+                    })
+                current_time += duration_ms
+
+        # Save the expected notes to a JSON file
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
+        with open(json_file_path, 'w', encoding='utf-8') as json_file:
+            json.dump(expected_notes, json_file, indent=4)
+
+        print("Expected notes generated and saved.")
+        emit('sheet_music_status', {'status': 'received'})  # Acknowledge receipt
+    except Exception as e:
+        print(f"Error processing sheet music: {e}")
+        emit('sheet_music_status', {'status': 'error', 'message': str(e)})
+
 @socketio.on('stop_recording')
 def stop_recording():
-    global is_recording
+    global is_recording, played_notes_list
 
     if is_recording:
         is_recording = False
         emit('recording_status', {'status': 'stopped'})
+
+        try:
+            # Load the expected notes
+            json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
+            with open(json_file_path, 'r') as f:
+                expected_notes = json.load(f)
+
+            # Parse the original MusicXML file
+            file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
+            score = converter.parse(file_path)
+
+            print(played_notes_list)
+            print(expected_notes)
+            # Compare played notes with expected notes
+            for played_note, expected_note in zip(played_notes_list, expected_notes):
+               
+                if(played_note['note'] == expected_note['note']):
+                        expected_note['correct'] = True
+
+            for expected_note in expected_notes:
+                if not expected_note.get('correct', False):  # Check if 'correct' is False
+                    for element in score.flat.notes:
+                        if (isinstance(element, note.Note) and
+                            element.nameWithOctave == expected_note["note"]):
+                            element.style.color = "red"  # Mark the note as red
+
+            # Save the modified MusicXML file
+            modified_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'modified_sheet_music.xml')
+            score.write('musicxml', fp=modified_file_path)
+
+            print("Modified sheet music saved with incorrect notes highlighted.")
+
+            # Clear the played notes list for the next recording session
+            played_notes_list.clear()
+        except Exception as e:
+            print(f"Error processing played notes: {e}")
+
+@app.route('/songs/<filename>')
+def get_song_file(filename):
+    return send_from_directory('songs', filename)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=1111)

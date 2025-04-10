@@ -17,6 +17,18 @@ const Songs = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Track the active timeout
 
   useEffect(() => {
+    // Emit the sheet music to the backend when the component is mounted
+    socket.emit('send_sheet_music', { doc });
+
+    // Listen for acknowledgment from the backend
+    socket.on('sheet_music_status', (data) => {
+      if (data.status === 'received') {
+        console.log('Sheet music successfully sent to the backend.');
+      } else if (data.status === 'error') {
+        console.error('Error sending sheet music:', data.message);
+      }
+    });
+
     // Initialize OpenSheetMusicDisplay
     osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
     osmdRef.current.setOptions({
@@ -52,6 +64,7 @@ const Songs = () => {
 
     // Cleanup on component unmount
     return () => {
+      socket.off('sheet_music_status');
       socket.off('note_feedback');
       socket.off('recording_status');
       socket.off('countdown');
@@ -62,6 +75,12 @@ const Songs = () => {
   }, []);
 
   const startRecording = () => {
+    osmdRef.current.load(doc).then(() => {
+        if (osmdRef.current) {
+          osmdRef.current.render();
+        }
+    });
+    
     setFeedback([]); // Clear previous feedback
     setCountdown(null); // Reset countdown
     setShowFeedback(false); // Hide feedback while recording
@@ -73,6 +92,7 @@ const Songs = () => {
     socket.emit('stop_recording');
     setIsRecording(false); // Enable the Start button
     setShowFeedback(true); // Show feedback after stopping recording
+  
     if (osmdRef.current) {
       const cursor = osmdRef.current.cursor;
       cursor.reset(); // Reset the cursor to the beginning
@@ -83,6 +103,25 @@ const Songs = () => {
       clearTimeout(timeoutRef.current); // Clear any active timeout
       timeoutRef.current = null;
     }
+  
+    // Fetch the modified MusicXML file from the backend
+    fetch('http://localhost:1111/songs/modified_sheet_music.xml')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch modified sheet music');
+        }
+        return response.text();
+      })
+      .then((modifiedDoc) => {
+        if (osmdRef.current) {
+          osmdRef.current.load(modifiedDoc).then(() => {
+            osmdRef.current.render(); // Render the modified sheet music
+          });
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading modified sheet music:', error);
+      });
   };
 
   function afterRender() {

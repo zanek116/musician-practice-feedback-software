@@ -101,14 +101,13 @@
           <text>wee</text>
         </lyric>
       </note>
-      <note color="#FF0000">
+      <note>
         <pitch>
           <step>G</step>
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-        <notehead color="#FF0000" parentheses="no">normal</notehead>
         <lyric name="1" number="1">
           <syllabic>begin</syllabic>
           <text>bon</text>
@@ -173,14 +172,13 @@
           <text>sing</text>
         </lyric>
       </note>
-      <note color="#FF0000">
+      <note>
         <pitch>
           <step>B</step>
           <octave>4</octave>
         </pitch>
         <duration>10080</duration>
         <type>quarter</type>
-        <notehead color="#FF0000" parentheses="no">normal</notehead>
         <lyric name="1" number="1">
           <syllabic>single</syllabic>
           <text>and</text>

@@ -15,10 +15,9 @@ const Songs = () => {
   const [isCursorMoving, setIsCursorMoving] = useState(false); // Track cursor movement state
   const [showFeedback, setShowFeedback] = useState(false); // Control feedback visibility
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Track the active timeout
+  const [bpm, setBpm] = useState(120); // Default BPM is 120
 
   useEffect(() => {
-    // Emit the sheet music to the backend when the component is mounted
-    socket.emit('send_sheet_music', { doc });
 
     // Listen for acknowledgment from the backend
     socket.on('sheet_music_status', (data) => {
@@ -75,16 +74,17 @@ const Songs = () => {
   }, []);
 
   const startRecording = () => {
+    socket.emit('send_sheet_music', { doc, bpm });
     osmdRef.current.load(doc).then(() => {
         if (osmdRef.current) {
           osmdRef.current.render();
         }
     });
-    
+
     setFeedback([]); // Clear previous feedback
     setCountdown(null); // Reset countdown
     setShowFeedback(false); // Hide feedback while recording
-    socket.emit('start_recording');
+    socket.emit('start_recording', {bpm});
     setIsRecording(true); // Disable the Start button
   };
 
@@ -124,62 +124,85 @@ const Songs = () => {
       });
   };
 
-  function afterRender() {
-    if (!osmdRef.current || isCursorMoving) return; // Prevent multiple loops
-    setIsCursorMoving(true); // Mark cursor as moving
+  const bpmRef = useRef(bpm); // Create a ref to store the current BPM
 
-    const cursor = osmdRef.current.cursor;
-    cursor.reset(); // Ensure the cursor starts at the beginning
-    cursor.show();
+useEffect(() => {
+  bpmRef.current = bpm; // Update the ref whenever BPM changes
+}, [bpm]);
 
-    // Enable followCursor to scroll with the cursor
-    osmdRef.current.FollowCursor = true;
+function afterRender() {
+  if (!osmdRef.current || isCursorMoving) return; // Prevent multiple loops
+  setIsCursorMoving(true); // Mark cursor as moving
 
-    const bpm = 120; // Set the desired BPM
-    const beatDuration = 60000 / bpm; // Duration of a quarter note in milliseconds (60000 ms = 1 minute)
+  const cursor = osmdRef.current.cursor;
+  cursor.reset(); // Ensure the cursor starts at the beginning
+  cursor.show();
 
-    const moveCursor = () => {
-      if (cursor.Iterator.EndReached) {
-        cursor.hide();
-        setIsCursorMoving(false); // Mark cursor as stopped
-        return;
+  // Enable followCursor to scroll with the cursor
+  osmdRef.current.FollowCursor = true;
+
+  const moveCursor = () => {
+    if (cursor.Iterator.EndReached) {
+      console.log("End of sheet music reached. Stopping cursor movement.");
+      cursor.hide();
+      setIsCursorMoving(false); // Mark cursor as stopped
+      stopRecording(); // Stop recording when the end is reached
+      return;
+    }
+
+    const beatDuration = 60000 / bpmRef.current; // Use the latest BPM value from the ref
+    console.log("Beat Duration:", beatDuration); // Log the beat duration
+
+    const notes = cursor.NotesUnderCursor();
+    if (notes && notes.length > 0) {
+      const noteType = notes[0].TypeLength; // Get the note type (e.g., "quarter", "half", "whole")
+      let noteDurationMs = beatDuration; // Default to quarter note duration
+
+      // Adjust the duration based on the note type
+      if (noteType.Equals(new Fraction(2, 4))) {
+        noteDurationMs = beatDuration * 2; // Half note lasts twice as long as a quarter note
+      }
+      if (noteType.Equals(new Fraction(4, 4))) {
+        noteDurationMs = beatDuration * 4; // Whole note lasts four times as long as a quarter note
       }
 
-      // Get the current note's type and adjust the duration
-      const notes = cursor.NotesUnderCursor();
-      if (notes && notes.length > 0) {
-        const noteType = notes[0].TypeLength; // Get the note type (e.g., "quarter", "half", "whole")
-        let noteDurationMs = beatDuration; // Default to quarter note duration
+      // Move the cursor to the next note after the calculated duration
+      timeoutRef.current = setTimeout(() => {
+        cursor.next();
+        moveCursor(); // Recursively call to handle the next note
+      }, noteDurationMs);
+    } else {
+      // If no notes are found, just move to the next position
+      timeoutRef.current = setTimeout(() => {
+        cursor.next();
+        moveCursor(); // Recursively call to handle the next position
+      }, beatDuration);
+    }
+  };
 
-        // Adjust the duration based on the note type
-        if (noteType.Equals(new Fraction(2, 4))) {
-          noteDurationMs = beatDuration * 2; // Half note lasts twice as long as a quarter note
-        }
-        if (noteType.Equals(new Fraction(4, 4))) {
-          noteDurationMs = beatDuration * 4; // Whole note lasts four times as long as a quarter note
-        }
-
-        // Move the cursor to the next note after the calculated duration
-        timeoutRef.current = setTimeout(() => {
-          cursor.next();
-          moveCursor(); // Recursively call to handle the next note
-        }, noteDurationMs);
-      } else {
-        // If no notes are found, just move to the next position
-        timeoutRef.current = setTimeout(() => {
-          cursor.next();
-          moveCursor(); // Recursively call to handle the next position
-        }, beatDuration);
-      }
-    };
-
-    moveCursor(); // Start the cursor movement
-  }
+  moveCursor(); // Start the cursor movement
+}
 
   return (
     <div className="songs-container">
       <h1>Music Score</h1>
       <div>
+        <center>
+        <div>
+          <label htmlFor="bpm-slider">BPM: {bpm}</label>
+          <input
+          id="bpm-slider"
+          type="range"
+          min="40" // Minimum BPM
+          max="240" // Maximum BPM
+          value={bpm}
+          onChange={(e) => {
+            console.log("BPM Slider Value:", e.target.value);
+            setBpm(Number(e.target.value));
+          }}
+          disabled ={isRecording} // Disable the slider if recording is in progress
+          />
+        </div>
         <button
           onClick={startRecording}
           className="start-button"
@@ -187,9 +210,14 @@ const Songs = () => {
         >
           <span className="play-icon">&#9658;</span> Start
         </button>
-        <button onClick={stopRecording} className="stop-button">
-          Stop
+        <button
+        onClick={stopRecording}
+        className="stop-button"
+        disabled={!isRecording} // Disable the button if not recording
+      >
+        Stop  
         </button>
+        </center>
       </div>
       <div>
         {countdown !== null && <h2>{countdown}</h2>}

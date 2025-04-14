@@ -83,7 +83,7 @@ def check_note_accuracy(played_note, played_time, expected_notes, processed_note
 ######################################################################
 # Audio processing function
 def audio_processing():
-    global is_recording, feedback_list
+    global is_recording, feedback_list, bpm
 
     try:
         json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
@@ -107,7 +107,7 @@ def audio_processing():
         
         time.sleep(0.05)
         start_time = time.time()
-        processed_notes = set()
+        processed_notes = set() 
 
         while is_recording:
             # Shift the buffer down and new data in
@@ -138,7 +138,7 @@ def audio_processing():
             played_notes_list.append({"note": played_note})
 
             # Compare the detected note with the expected notes
-            result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=100)
+            result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, 150)
             if result:
                 print(result)
                 socketio.emit('note_feedback', {'message': result})
@@ -146,19 +146,18 @@ def audio_processing():
         stream.stop_stream()
         stream.close()
         pyaudio.PyAudio().terminate()
-
     except Exception as e:
         print(f"An error occurred: {e}")
 
 ######################################################################
 # SocketIO event handlers
 @socketio.on('start_recording')
-def start_recording():
-    global is_recording, recording_thread
+def start_recording(data):
+    global is_recording, recording_thread, bpm
 
     if not is_recording:
         is_recording = True
-
+        bpm = data.get('bpm', 120)  # Default to 120 BPM if not provided
         # Emit countdown to the frontend
         for i in range(3, 0, -1):
             socketio.emit('countdown', {'count': i})
@@ -172,6 +171,7 @@ def start_recording():
 
 @socketio.on('send_sheet_music')
 def handle_sheet_music(data):
+    global bpm
     try:
         # Save the received sheet music to a file with UTF-16 encoding
         file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
@@ -186,29 +186,30 @@ def handle_sheet_music(data):
         score = converter.parse(file_path, encoding='utf-16')
         current_time = 0.0  # Start time in milliseconds
 
+        # Get the BPM from the data or use the global bpm
+        bpm = data.get('bpm', bpm)  # Use the provided BPM or fallback to the global BPM
+        beat_duration_ms = 60000 / bpm  # Duration of a quarter note in milliseconds
+        print(score.flat.notes)
         for element in score.flat.notes:
             if isinstance(element, note.Note):
                 note_name = element.nameWithOctave
-                duration_ms = element.quarterLength * 1000  # Convert quarter length to milliseconds
+                pitch = element.pitch  # Access the pitch object
+                print(f"Note: {note_name}, Pitch: {pitch}, Octave: {pitch.octave}")
+                duration_ms = element.quarterLength * beat_duration_ms  # Adjust duration based on BPM
+
+                # Ensure duration is not zero
+                if duration_ms <= 0:
+                    duration_ms = beat_duration_ms  # Default to one beat duration
+
                 expected_notes.append({
                     "note": note_name,
                     "start_time": current_time,
                     "end_time": current_time + duration_ms,
                     "correct": False  # Initialize as incorrect
                 })
-                current_time += duration_ms
-            elif isinstance(element, chord.Chord):
-                chord_notes = [n.nameWithOctave for n in element.notes]
-                duration_ms = element.quarterLength * 1000  # Convert quarter length to milliseconds
-                for chord_note in chord_notes:
-                    expected_notes.append({
-                        "note": chord_note,
-                        "start_time": current_time,
-                        "end_time": current_time + duration_ms,
-                        "correct": False  # Initialize as incorrect
-                    })
-                current_time += duration_ms
+                current_time += duration_ms  # Increment current time by the note's duration
 
+        print("Expected Notes:", json.dumps(expected_notes, indent=4))
         # Save the expected notes to a JSON file
         json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
         with open(json_file_path, 'w', encoding='utf-8') as json_file:
@@ -220,49 +221,48 @@ def handle_sheet_music(data):
         print(f"Error processing sheet music: {e}")
         emit('sheet_music_status', {'status': 'error', 'message': str(e)})
 
+def provide_feedback():
+    try:
+        # Load the expected notes
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
+        with open(json_file_path, 'r') as f:
+            expected_notes = json.load(f)
+
+        # Parse the original MusicXML file
+        file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
+        score = converter.parse(file_path)
+
+        # Compare played notes with expected notes
+        for played_note, expected_note in zip(played_notes_list, expected_notes):
+            
+            if(played_note['note'] == expected_note['note']):
+                    expected_note['correct'] = True
+
+        for expected_note in expected_notes:
+            if not expected_note.get('correct', False):  # Check if 'correct' is False
+                for element in score.flat.notes:
+                    if (isinstance(element, note.Note) and
+                        element.nameWithOctave == expected_note["note"]):
+                        element.style.color = "red"  # Mark the note as red
+
+        # Save the modified MusicXML file
+        modified_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'modified_sheet_music.xml')
+        score.write('musicxml', fp=modified_file_path)
+
+        print("Modified sheet music saved with incorrect notes highlighted.")
+
+        # Clear the played notes list for the next recording session
+        played_notes_list.clear()
+    except Exception as e:
+        print(f"Error processing played notes: {e}")
+
 @socketio.on('stop_recording')
 def stop_recording():
     global is_recording, played_notes_list
-
+    print("Stopping recording...")
     if is_recording:
         is_recording = False
-        emit('recording_status', {'status': 'stopped'})
-
-        try:
-            # Load the expected notes
-            json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
-            with open(json_file_path, 'r') as f:
-                expected_notes = json.load(f)
-
-            # Parse the original MusicXML file
-            file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
-            score = converter.parse(file_path)
-
-            print(played_notes_list)
-            print(expected_notes)
-            # Compare played notes with expected notes
-            for played_note, expected_note in zip(played_notes_list, expected_notes):
-               
-                if(played_note['note'] == expected_note['note']):
-                        expected_note['correct'] = True
-
-            for expected_note in expected_notes:
-                if not expected_note.get('correct', False):  # Check if 'correct' is False
-                    for element in score.flat.notes:
-                        if (isinstance(element, note.Note) and
-                            element.nameWithOctave == expected_note["note"]):
-                            element.style.color = "red"  # Mark the note as red
-
-            # Save the modified MusicXML file
-            modified_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'modified_sheet_music.xml')
-            score.write('musicxml', fp=modified_file_path)
-
-            print("Modified sheet music saved with incorrect notes highlighted.")
-
-            # Clear the played notes list for the next recording session
-            played_notes_list.clear()
-        except Exception as e:
-            print(f"Error processing played notes: {e}")
+        provide_feedback()
 
 @app.route('/songs/<filename>')
 def get_song_file(filename):

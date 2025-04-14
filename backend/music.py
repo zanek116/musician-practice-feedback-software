@@ -75,8 +75,18 @@ def check_note_accuracy(played_note, played_time, expected_notes, processed_note
         if start_time <= played_time <= end_time:
             processed_notes.add(i)
             if played_note == expected_note['note']:
+                played_notes_list.append({
+                    'note': played_note,
+                    'time': played_time,
+                    'correct': True
+                })
                 return f"Correct: Played {played_note} at {played_time:.2f} ms (Expected: {expected_note['note']})"
             else:
+                played_notes_list.append({
+                    'note': played_note,
+                    'time': played_time,
+                    'correct': False
+                })
                 return f"Incorrect: Played {played_note} at {played_time:.2f} ms (Expected: {expected_note['note']})"
     return None
 
@@ -134,8 +144,6 @@ def audio_processing():
 
             # Get the note name
             played_note = note_name(n0)
-
-            played_notes_list.append({"note": played_note})
 
             # Compare the detected note with the expected notes
             result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, 150)
@@ -205,7 +213,6 @@ def handle_sheet_music(data):
                     "note": note_name,
                     "start_time": current_time,
                     "end_time": current_time + duration_ms,
-                    "correct": False  # Initialize as incorrect
                 })
                 current_time += duration_ms  # Increment current time by the note's duration
 
@@ -223,26 +230,24 @@ def handle_sheet_music(data):
 
 def provide_feedback():
     try:
-        # Load the expected notes
-        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
-        with open(json_file_path, 'r') as f:
-            expected_notes = json.load(f)
-
         # Parse the original MusicXML file
         file_path = os.path.join(os.path.dirname(__file__), 'songs', 'received_sheet_music.xml')
         score = converter.parse(file_path)
 
-        # Compare played notes with expected notes
-        for played_note, expected_note in zip(played_notes_list, expected_notes):
-            
-            if(played_note['note'] == expected_note['note']):
-                    expected_note['correct'] = True
+        score_notes = [element for element in score.flat.notes if isinstance(element, note.Note)]
+        matched_indices = set()
+        # Iterate through played notes and score notes simultaneously
+        for played_note, score_note in zip(played_notes_list, score_notes):
+            matched_indices.add(score_notes.index(score_note))
+            if not played_note['correct']:  # Check if the played note is incorrect
+                # Highlight the incorrect note in the score
+                score_note.style.color = 'red'
+                print(f"Marked {played_note['note']} as incorrect (red) in the score.")
 
-        for expected_note in expected_notes:
-            if not expected_note.get('correct', False):  # Check if 'correct' is False
-                    if (isinstance(element, note.Note) and
-                        element.nameWithOctave == expected_note["note"]):
-                        element.style.color = "red"  # Mark the note as red
+        for index, score_note in enumerate(score_notes):
+            if index not in matched_indices:
+                score_note.style.color = 'red'
+                print(f"Marked unmatched note {score_note.nameWithOctave} as red in the score.")
 
         # Save the modified MusicXML file
         modified_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'modified_sheet_music.xml')

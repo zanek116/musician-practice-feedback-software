@@ -240,7 +240,6 @@ def provide_feedback():
 
         for expected_note in expected_notes:
             if not expected_note.get('correct', False):  # Check if 'correct' is False
-                for element in score.flat.notes:
                     if (isinstance(element, note.Note) and
                         element.nameWithOctave == expected_note["note"]):
                         element.style.color = "red"  # Mark the note as red

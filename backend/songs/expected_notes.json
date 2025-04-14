@@ -2,17 +2,11 @@
     {
         "note": "D4",
         "start_time": 0.0,
-        "end_time": 250.0,
-        "correct": false
-    },
-    {
-        "note": "E4",
-        "start_time": 250.0,
         "end_time": 500.0,
         "correct": false
     },
     {
-        "note": "G4",
+        "note": "E4",
         "start_time": 500.0,
         "end_time": 1000.0,
         "correct": false
@@ -20,71 +14,35 @@
     {
         "note": "G4",
         "start_time": 1000.0,
-        "end_time": 1250.0,
-        "correct": false
-    },
-    {
-        "note": "A4",
-        "start_time": 1250.0,
-        "end_time": 1500.0,
-        "correct": false
-    },
-    {
-        "note": "B4",
-        "start_time": 1500.0,
         "end_time": 2000.0,
         "correct": false
     },
     {
-        "note": "B4",
+        "note": "G4",
         "start_time": 2000.0,
-        "end_time": 2250.0,
-        "correct": false
-    },
-    {
-        "note": "A4",
-        "start_time": 2250.0,
         "end_time": 2500.0,
         "correct": false
     },
     {
-        "note": "G4",
+        "note": "A4",
         "start_time": 2500.0,
         "end_time": 3000.0,
         "correct": false
     },
     {
-        "note": "G4",
+        "note": "B4",
         "start_time": 3000.0,
-        "end_time": 3250.0,
-        "correct": false
-    },
-    {
-        "note": "E4",
-        "start_time": 3250.0,
-        "end_time": 3500.0,
-        "correct": false
-    },
-    {
-        "note": "D4",
-        "start_time": 3500.0,
         "end_time": 4000.0,
         "correct": false
     },
     {
-        "note": "D4",
+        "note": "B4",
         "start_time": 4000.0,
-        "end_time": 4250.0,
-        "correct": false
-    },
-    {
-        "note": "E4",
-        "start_time": 4250.0,
         "end_time": 4500.0,
         "correct": false
     },
     {
-        "note": "G4",
+        "note": "A4",
         "start_time": 4500.0,
         "end_time": 5000.0,
         "correct": false
@@ -92,169 +50,211 @@
     {
         "note": "G4",
         "start_time": 5000.0,
-        "end_time": 5500.0,
-        "correct": false
-    },
-    {
-        "note": "G4",
-        "start_time": 5500.0,
         "end_time": 6000.0,
         "correct": false
     },
     {
-        "note": "B4",
+        "note": "G4",
         "start_time": 6000.0,
-        "end_time": 6250.0,
-        "correct": false
-    },
-    {
-        "note": "D5",
-        "start_time": 6250.0,
         "end_time": 6500.0,
         "correct": false
     },
     {
-        "note": "E5",
+        "note": "E4",
         "start_time": 6500.0,
-        "end_time": 7500.0,
+        "end_time": 7000.0,
         "correct": false
     },
     {
-        "note": "D5",
-        "start_time": 7500.0,
+        "note": "D4",
+        "start_time": 7000.0,
         "end_time": 8000.0,
         "correct": false
     },
     {
-        "note": "D5",
+        "note": "D4",
         "start_time": 8000.0,
         "end_time": 8500.0,
         "correct": false
     },
     {
-        "note": "E5",
+        "note": "E4",
         "start_time": 8500.0,
         "end_time": 9000.0,
         "correct": false
     },
     {
-        "note": "E5",
+        "note": "G4",
         "start_time": 9000.0,
-        "end_time": 9250.0,
-        "correct": false
-    },
-    {
-        "note": "D5",
-        "start_time": 9250.0,
-        "end_time": 9500.0,
-        "correct": false
-    },
-    {
-        "note": "B4",
-        "start_time": 9500.0,
         "end_time": 10000.0,
         "correct": false
     },
     {
-        "note": "B4",
+        "note": "G4",
         "start_time": 10000.0,
-        "end_time": 10250.0,
-        "correct": false
-    },
-    {
-        "note": "D5",
-        "start_time": 10250.0,
-        "end_time": 10500.0,
-        "correct": false
-    },
-    {
-        "note": "C5",
-        "start_time": 10500.0,
-        "end_time": 10750.0,
-        "correct": false
-    },
-    {
-        "note": "B4",
-        "start_time": 10750.0,
         "end_time": 11000.0,
         "correct": false
     },
     {
-        "note": "A4",
-        "start_time": 11000.0,
-        "end_time": 11250.0,
-        "correct": false
-    },
-    {
         "note": "G4",
-        "start_time": 11250.0,
-        "end_time": 11500.0,
-        "correct": false
-    },
-    {
-        "note": "E4",
-        "start_time": 11500.0,
+        "start_time": 11000.0,
         "end_time": 12000.0,
         "correct": false
     },
     {
-        "note": "D4",
+        "note": "B4",
         "start_time": 12000.0,
-        "end_time": 12250.0,
-        "correct": false
-    },
-    {
-        "note": "E4",
-        "start_time": 12250.0,
         "end_time": 12500.0,
         "correct": false
     },
     {
-        "note": "G4",
+        "note": "D5",
         "start_time": 12500.0,
         "end_time": 13000.0,
         "correct": false
     },
     {
-        "note": "B4",
+        "note": "E5",
         "start_time": 13000.0,
-        "end_time": 13250.0,
+        "end_time": 15000.0,
         "correct": false
     },
     {
         "note": "D5",
-        "start_time": 13250.0,
-        "end_time": 13500.0,
+        "start_time": 15000.0,
+        "end_time": 16000.0,
+        "correct": false
+    },
+    {
+        "note": "D5",
+        "start_time": 16000.0,
+        "end_time": 17000.0,
         "correct": false
     },
     {
         "note": "E5",
-        "start_time": 13500.0,
-        "end_time": 14000.0,
+        "start_time": 17000.0,
+        "end_time": 18000.0,
+        "correct": false
+    },
+    {
+        "note": "E5",
+        "start_time": 18000.0,
+        "end_time": 18500.0,
         "correct": false
     },
     {
         "note": "D5",
-        "start_time": 14000.0,
-        "end_time": 14250.0,
+        "start_time": 18500.0,
+        "end_time": 19000.0,
         "correct": false
     },
     {
         "note": "B4",
-        "start_time": 14250.0,
-        "end_time": 14500.0,
+        "start_time": 19000.0,
+        "end_time": 20000.0,
+        "correct": false
+    },
+    {
+        "note": "B4",
+        "start_time": 20000.0,
+        "end_time": 20500.0,
+        "correct": false
+    },
+    {
+        "note": "D5",
+        "start_time": 20500.0,
+        "end_time": 21000.0,
+        "correct": false
+    },
+    {
+        "note": "C5",
+        "start_time": 21000.0,
+        "end_time": 21500.0,
+        "correct": false
+    },
+    {
+        "note": "B4",
+        "start_time": 21500.0,
+        "end_time": 22000.0,
         "correct": false
     },
     {
         "note": "A4",
-        "start_time": 14500.0,
-        "end_time": 15500.0,
+        "start_time": 22000.0,
+        "end_time": 22500.0,
         "correct": false
     },
     {
         "note": "G4",
-        "start_time": 15500.0,
-        "end_time": 16000.0,
+        "start_time": 22500.0,
+        "end_time": 23000.0,
+        "correct": false
+    },
+    {
+        "note": "E4",
+        "start_time": 23000.0,
+        "end_time": 24000.0,
+        "correct": false
+    },
+    {
+        "note": "D4",
+        "start_time": 24000.0,
+        "end_time": 24500.0,
+        "correct": false
+    },
+    {
+        "note": "E4",
+        "start_time": 24500.0,
+        "end_time": 25000.0,
+        "correct": false
+    },
+    {
+        "note": "G4",
+        "start_time": 25000.0,
+        "end_time": 26000.0,
+        "correct": false
+    },
+    {
+        "note": "B4",
+        "start_time": 26000.0,
+        "end_time": 26500.0,
+        "correct": false
+    },
+    {
+        "note": "D5",
+        "start_time": 26500.0,
+        "end_time": 27000.0,
+        "correct": false
+    },
+    {
+        "note": "E5",
+        "start_time": 27000.0,
+        "end_time": 28000.0,
+        "correct": false
+    },
+    {
+        "note": "D5",
+        "start_time": 28000.0,
+        "end_time": 28500.0,
+        "correct": false
+    },
+    {
+        "note": "B4",
+        "start_time": 28500.0,
+        "end_time": 29000.0,
+        "correct": false
+    },
+    {
+        "note": "A4",
+        "start_time": 29000.0,
+        "end_time": 31000.0,
+        "correct": false
+    },
+    {
+        "note": "G4",
+        "start_time": 31000.0,
+        "end_time": 32000.0,
         "correct": false
     }
 ]

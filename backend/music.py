@@ -165,6 +165,7 @@ def start_recording(data):
         socketio.emit('countdown', {'count': 'Go!'})
 
         # Start the recording thread
+        time.sleep(0.03)  ## USE THIS VALUE TO MAKE SURE TIMING IS GOOD WITH MUSICXML, note: first note is still not working
         recording_thread = threading.Thread(target=audio_processing)
         recording_thread.start()
         emit('recording_status', {'status': 'started'})

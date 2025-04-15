@@ -5,25 +5,26 @@ import './Songs.css';
 
 const Songs = () => {
     const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
-    const [feedback, setFeedback] = useState<{ message: string; type: string }[]>([]); // Store feedback with type
-    const [socket, setSocket] = useState<any>(null); // Manage the socket connection
-    const [isPlaying, setIsPlaying] = useState(false); // Track playback state
-    const [countdown, setCountdown] = useState<number | null>(null); // Track countdown
-    const timeoutIdRef = useRef<NodeJS.Timeout | null>(null); // Track active timeout
+    const [feedback, setFeedback] = useState<{ message: string; type: string }[]>([]);
+    const [socket, setSocket] = useState<any>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [countdown, setCountdown] = useState<number | null>(null);
+    const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+    const metronomeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const metronomeAudio = useRef<HTMLAudioElement | null>(null);
   
     useEffect(() => {
       // Establish a connection to the backend
-      const newSocket = io('http://localhost:1111'); // Replace with your backend URL if different
+      const newSocket = io('http://localhost:1111');
       setSocket(newSocket);
   
       // Listen for note feedback from the backend
       newSocket.on('note_feedback', (data: { message: string }) => {
-        const type = data.message.includes('Correct') ? 'correct' : 'incorrect'; // Determine feedback type
-        setFeedback((prevFeedback) => [...prevFeedback, { message: data.message, type }]); // Append new feedback
+        const type = data.message.includes('Correct') ? 'correct' : 'incorrect';
+        setFeedback((prevFeedback) => [...prevFeedback, { message: data.message, type }]);
       });
   
       return () => {
-        // Clean up the socket connection when the component unmounts
         newSocket.disconnect();
       };
     }, []);
@@ -1096,6 +1097,28 @@ osmdRef.current.load(doc).then(() => {
 });
 }, []);
 
+useEffect(() => {
+    // Initialize the metronome audio
+    metronomeAudio.current = new Audio('/sounds/click.mp3');
+  }, []);
+
+  const startMetronome = (bpm: number) => {
+    if (!metronomeAudio.current) return;
+
+    const interval = 60000 / bpm; // Calculate interval in milliseconds
+    metronomeIntervalRef.current = setInterval(() => {
+      console.log('Playing metronome click'); // Debug log
+      metronomeAudio.current?.play().catch((err) => console.error('Metronome audio error:', err));
+    }, interval);
+  };
+
+  const stopMetronome = () => {
+    if (metronomeIntervalRef.current) {
+      clearInterval(metronomeIntervalRef.current);
+      metronomeIntervalRef.current = null;
+    }
+  };
+
 const startPlaybackAndFeedback = () => {
   if (!osmdRef.current) return;
 
@@ -1110,6 +1133,7 @@ const startPlaybackAndFeedback = () => {
     if (cursor.Iterator.EndReached) {
       cursor.hide();
       setIsPlaying(false); // Stop playback when the end is reached
+      stopMetronome();
       return;
     }
 
@@ -1160,6 +1184,7 @@ if (timeoutIdRef.current) {
   timeoutIdRef.current = null;
 }
 
+stopMetronome();
 setIsPlaying(false); // Set playback state to false
 setFeedback([]); // Clear feedback messages
 };
@@ -1171,6 +1196,9 @@ if (isPlaying) {
   // Start the countdown before starting playback and feedback
   let countdownValue = 3;
   setCountdown(countdownValue);
+
+  const bpm = 120;
+  startMetronome(bpm);
 
   // Start audio processing immediately when the countdown begins
   if (socket) {

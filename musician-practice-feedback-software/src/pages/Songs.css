@@ -45,8 +45,7 @@
   }
   
   .osmd-container {
-    width: 100%;
-    max-width: 800px;
+    width: 80%;
     height: 100vh;
     overflow-y: auto;
     border: 1px solid #ccc;
@@ -55,20 +54,25 @@
     background-color: white;
   }
 
-  .countdown {
+.countdown {
     position: absolute;
     top: 20%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 48px;
+    font-size: 24px; /* Font size for the countdown text */
     font-weight: bold;
-    color: #ff0000;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 20px;
-    border-radius: 10px;
+    color: #ff0000; /* Text color */
+    background-color: rgba(255, 255, 255, 0.95); /* Slightly less transparent */
+    width: 100px; /* Fixed width */
+    height: 100px; /* Fixed height to make it square */
+    display: flex; /* Center the text inside the box */
+    align-items: center; /* Vertically center the text */
+    justify-content: center; /* Horizontally center the text */
+    border-radius: 4px; /* Rounded corners */
+    border: 2px solid black; /* Black border */
     text-align: center;
-    z-index: 1000;
-  }
+    z-index: 1000; /* Ensure it appears above other elements */
+}
 
   .starting-indicator {
     position: absolute;
@@ -83,4 +87,24 @@
     border-radius: 10px;
     text-align: center;
     z-index: 1000;
+  }
+
+  .feedback-container ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .feedback-container li {
+    font-size: 18px;
+    margin: 5px 0;
+  }
+  
+  .feedback-container li.correct {
+    color: green; /* Green for correct notes */
+    font-weight: bold;
+  }
+  
+  .feedback-container li.incorrect {
+    color: red; /* Red for incorrect notes */
+    font-weight: bold;
   }

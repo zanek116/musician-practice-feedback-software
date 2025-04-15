@@ -5,11 +5,11 @@ import './Songs.css';
 
 const Songs = () => {
     const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
-    const [feedback, setFeedback] = useState<string[]>([]); // State to store note feedback
-    const [socket, setSocket] = useState<any>(null); // State to manage the socket connection
-    const [isPlaying, setIsPlaying] = useState(false); // State to track if playback is active
-    const [countdown, setCountdown] = useState<number | null>(null); // State to track the countdown
-    const timeoutIdRef = useRef<NodeJS.Timeout | null>(null); // Ref to track the active timeout
+    const [feedback, setFeedback] = useState<{ message: string; type: string }[]>([]); // Store feedback with type
+    const [socket, setSocket] = useState<any>(null); // Manage the socket connection
+    const [isPlaying, setIsPlaying] = useState(false); // Track playback state
+    const [countdown, setCountdown] = useState<number | null>(null); // Track countdown
+    const timeoutIdRef = useRef<NodeJS.Timeout | null>(null); // Track active timeout
   
     useEffect(() => {
       // Establish a connection to the backend
@@ -18,7 +18,8 @@ const Songs = () => {
   
       // Listen for note feedback from the backend
       newSocket.on('note_feedback', (data: { message: string }) => {
-        setFeedback((prevFeedback) => [...prevFeedback, data.message]); // Append new feedback
+        const type = data.message.includes('Correct') ? 'correct' : 'incorrect'; // Determine feedback type
+        setFeedback((prevFeedback) => [...prevFeedback, { message: data.message, type }]); // Append new feedback
       });
   
       return () => {
@@ -1190,27 +1191,29 @@ if (isPlaying) {
 };
 
 return (
-<div className="songs-container">
-  <h1>Music Score</h1>
-  {countdown !== null && (
-    <div className="countdown">
-      <h2>{countdown}</h2>
+    <div className="songs-container">
+      <h1>Music Score</h1>
+      {countdown !== null && (
+        <div className="countdown">
+          <h2>{countdown}</h2>
+        </div>
+      )}
+      <div className="feedback-container">
+        <h2>Note Feedback: </h2>
+        <ul>
+          {feedback.map((item, index) => (
+            <li key={index} className={item.type}>
+              {item.message}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <button onClick={togglePlayback} className="start-button">
+        {isPlaying ? 'Stop' : 'Start'}
+      </button>
+      <div id="osmdContainer" className="osmd-container" />
     </div>
-  )}
-  <div className="feedback-container">
-    <h2>Note Feedback</h2>
-    <ul>
-      {feedback.map((message, index) => (
-        <li key={index}>{message}</li>
-      ))}
-    </ul>
-  </div>
-  <button onClick={togglePlayback} className="start-button">
-    {isPlaying ? 'Stop' : 'Start'}
-  </button>
-  <div id="osmdContainer" className="osmd-container" />
-</div>
-);
+  );
 };
 
 export default Songs;

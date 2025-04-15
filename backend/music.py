@@ -135,8 +135,6 @@ def audio_processing():
             # Get the note name
             played_note = note_name(n0)
             
-            print(f"Detected: {played_note} at {played_time:.2f} ms")
-
             # Compare the detected note with the expected notes
             result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=100)
             if result:

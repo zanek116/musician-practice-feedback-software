@@ -57,10 +57,17 @@ def harmonic_product_spectrum(fft, num_harmonics=5):
 
 ######################################################################
 # Function to check if a played note matches the expected note
-def check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=150):
+def check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=50):
     for i, expected_note in enumerate(expected_notes):
         if i in processed_notes:
             continue
+        
+        if i == 0:
+            # Check if D4 is played anytime before the second note's start time
+            second_note_start_time = expected_notes[1]['start_time'] if len(expected_notes) > 1 else float('inf')
+            if played_note == "D4" or "D5" and played_time < second_note_start_time:
+                processed_notes.add(i)
+                return f"Correct: Played D4 at {played_time:.2f} ms (Expected: {expected_note['note']})"
 
         start_time = expected_note['start_time'] - grace_period
         end_time = expected_note['end_time'] + grace_period
@@ -98,7 +105,7 @@ def audio_processing():
 
         window = 0.5 * (1 - np.cos(np.linspace(0, 2 * np.pi, SAMPLES_PER_FFT, False)))
         
-        time.sleep(0.05)
+        time.sleep(0.1)
         start_time = time.time()
         processed_notes = set()
 
@@ -127,6 +134,8 @@ def audio_processing():
 
             # Get the note name
             played_note = note_name(n0)
+            
+            print(f"Detected: {played_note} at {played_time:.2f} ms")
 
             # Compare the detected note with the expected notes
             result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=100)
@@ -157,6 +166,7 @@ def start_recording():
         socketio.emit('countdown', {'count': 'Go!'})
 
         # Start the recording thread
+        time.sleep(0.2)
         recording_thread = threading.Thread(target=audio_processing)
         recording_thread.start()
         emit('recording_status', {'status': 'started'})

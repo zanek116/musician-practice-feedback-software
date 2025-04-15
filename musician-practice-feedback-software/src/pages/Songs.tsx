@@ -1,9 +1,31 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Fraction, OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import io from 'socket.io-client';
 import './Songs.css';
 
 const Songs = () => {
-  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
+    const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
+    const [feedback, setFeedback] = useState<string[]>([]); // State to store note feedback
+    const [socket, setSocket] = useState<any>(null); // State to manage the socket connection
+    const [isPlaying, setIsPlaying] = useState(false); // State to track if playback is active
+    const [countdown, setCountdown] = useState<number | null>(null); // State to track the countdown
+    const timeoutIdRef = useRef<NodeJS.Timeout | null>(null); // Ref to track the active timeout
+  
+    useEffect(() => {
+      // Establish a connection to the backend
+      const newSocket = io('http://localhost:1111'); // Replace with your backend URL if different
+      setSocket(newSocket);
+  
+      // Listen for note feedback from the backend
+      newSocket.on('note_feedback', (data: { message: string }) => {
+        setFeedback((prevFeedback) => [...prevFeedback, data.message]); // Append new feedback
+      });
+  
+      return () => {
+        // Clean up the socket connection when the component unmounts
+        newSocket.disconnect();
+      };
+    }, []);
 
   useEffect(() => {
     const doc = `<?xml version="1.0" encoding="UTF-16"?>
@@ -1060,72 +1082,135 @@ const Songs = () => {
 </score-partwise>
 `;
 
-osmdRef.current = new OpenSheetMusicDisplay("osmdContainer");
-    osmdRef.current.setOptions({
-      backend: "svg",
-      drawTitle: true,
-      autoResize: true,
-    });
-    osmdRef.current.load(doc).then(() => {
-      if (osmdRef.current) {
-        osmdRef.current.render();
-      }
-    });
-  }, []);
+osmdRef.current = new OpenSheetMusicDisplay('osmdContainer');
+osmdRef.current.setOptions({
+  backend: 'svg',
+  drawTitle: true,
+  autoResize: true,
+});
+osmdRef.current.load(doc).then(() => {
+  if (osmdRef.current) {
+    osmdRef.current.render();
+  }
+});
+}, []);
 
-  function afterRender() {
-    if (!osmdRef.current) return;
-    const cursor = osmdRef.current.cursor;
-    cursor.reset(); // Ensure the cursor starts at the beginning
-    cursor.show();
-  
-    const bpm = 120; // Set the desired BPM
-    const beatDuration = 60000 / bpm; // Duration of a quarter note in milliseconds (60000 ms = 1 minute)
-  
-    const moveCursor = () => {
-      if (cursor.Iterator.EndReached) {
-        cursor.hide();
-        return;
+const startPlaybackAndFeedback = () => {
+  if (!osmdRef.current) return;
+
+  const cursor = osmdRef.current.cursor;
+  cursor.reset(); // Ensure the cursor starts at the beginning
+  cursor.show();
+
+  const bpm = 120; // Set the desired BPM
+  const beatDuration = 60000 / bpm; // Duration of a quarter note in milliseconds (60000 ms = 1 minute)
+
+  const moveCursor = () => {
+    if (cursor.Iterator.EndReached) {
+      cursor.hide();
+      setIsPlaying(false); // Stop playback when the end is reached
+      return;
+    }
+
+    const notes = cursor.NotesUnderCursor();
+    let noteDurationMs = beatDuration; // Default to quarter note duration
+
+    if (notes && notes.length > 0) {
+      const noteType = notes[0].Length; // Get the note's length as a Fraction
+
+      // Adjust the duration based on the note type
+      if (noteType.Equals(new Fraction(2, 4))) {
+        noteDurationMs = beatDuration * 2; // Half note lasts twice as long as a quarter note
+      } else if (noteType.Equals(new Fraction(4, 4))) {
+        noteDurationMs = beatDuration * 4; // Whole note lasts four times as long as a quarter note
+      } else if (noteType.Equals(new Fraction(1, 8))) {
+        noteDurationMs = beatDuration / 2; // Eighth note lasts half as long as a quarter note
       }
-  
-      // Get the current note's type and adjust the duration
-      const notes = cursor.NotesUnderCursor();
-      if (notes && notes.length > 0) {
-        const noteType = notes[0].TypeLength; // Get the note type (e.g., "quarter", "half", "whole")
-        let noteDurationMs = beatDuration; // Default to quarter note duration
-  
-        // Adjust the duration based on the note type
-        if (noteType.Equals(new Fraction(2, 4))) {
-          noteDurationMs = beatDuration * 2; // Half note lasts twice as long as a quarter note
-        }
-        if (noteType.Equals(new Fraction(4, 4))) {
-          noteDurationMs = beatDuration * 4; // Whole note lasts four times as long as a quarter note
-        }
-  
-        // Move the cursor to the next note after the calculated duration
-        setTimeout(() => {
-          cursor.next();
-          moveCursor(); // Recursively call to handle the next note
-        }, noteDurationMs);
-      } else {
-        // If no notes are found, just move to the next position
-        cursor.next();
-        moveCursor(); // Recursively call to handle the next position
-      }
-    };
-  
-    moveCursor(); // Start the cursor movement
+    }
+
+    // Move the cursor to the next note after the calculated duration
+    timeoutIdRef.current = setTimeout(() => {
+      cursor.next();
+      moveCursor(); // Recursively call to handle the next note
+    }, noteDurationMs);
+  };
+
+  moveCursor(); // Start the cursor movement
+  setIsPlaying(true); // Set playback state to true
+
+  // Start audio processing feedback loop
+  if (socket) {
+    socket.emit('start_recording'); // Notify the backend to start audio processing
+  }
+};
+
+const stopPlaybackAndFeedback = () => {
+if (osmdRef.current && osmdRef.current.cursor) {
+  osmdRef.current.cursor.hide(); // Hide the cursor
+}
+
+if (socket) {
+  socket.emit('stop_recording'); // Notify the backend to stop audio processing
+}
+
+// Clear the active timeout to stop the cursor movement
+if (timeoutIdRef.current) {
+  clearTimeout(timeoutIdRef.current);
+  timeoutIdRef.current = null;
+}
+
+setIsPlaying(false); // Set playback state to false
+setFeedback([]); // Clear feedback messages
+};
+
+const togglePlayback = () => {
+if (isPlaying) {
+  stopPlaybackAndFeedback();
+} else {
+  // Start the countdown before starting playback and feedback
+  let countdownValue = 3;
+  setCountdown(countdownValue);
+
+  // Start audio processing immediately when the countdown begins
+  if (socket) {
+    socket.emit('start_recording'); // Notify the backend to start audio processing
   }
 
-  return (
-    <div className="songs-container">
-      <h1>Music Score</h1>
-      <button onClick={afterRender} className="start-button">
-        <span className="play-icon">&#9658;</span> Start
-      </button>
-      <div id="osmdContainer" className="osmd-container" />
+  const countdownInterval = setInterval(() => {
+    countdownValue -= 1;
+    if (countdownValue === 0) {
+      clearInterval(countdownInterval);
+      setCountdown(null); // Clear the countdown
+      startPlaybackAndFeedback(); // Start playback and feedback after countdown
+    } else {
+      setCountdown(countdownValue);
+    }
+  }, 1000);
+}
+};
+
+return (
+<div className="songs-container">
+  <h1>Music Score</h1>
+  {countdown !== null && (
+    <div className="countdown">
+      <h2>{countdown}</h2>
     </div>
-  );
+  )}
+  <div className="feedback-container">
+    <h2>Note Feedback</h2>
+    <ul>
+      {feedback.map((message, index) => (
+        <li key={index}>{message}</li>
+      ))}
+    </ul>
+  </div>
+  <button onClick={togglePlayback} className="start-button">
+    {isPlaying ? 'Stop' : 'Start'}
+  </button>
+  <div id="osmdContainer" className="osmd-container" />
+</div>
+);
 };
 
 export default Songs;

@@ -1,0 +1,30 @@
+        //   const graphicalMusicSheet = osmdRef.current.GraphicSheet;
+    
+        //   if (graphicalMusicSheet) {
+        //     let isRed = true; // Track the current color state
+          
+        //     // Set an interval to toggle colors every 5 seconds
+        //     const intervalId = setInterval(() => {
+        //       graphicalMusicSheet.MeasureList.forEach((measureList) => {
+        //         measureList.forEach((measure) => {
+        //           measure.staffEntries.forEach((staffEntry) => {
+        //             if (staffEntry.graphicalVoiceEntries) {
+        //               staffEntry.graphicalVoiceEntries.forEach((voiceEntry) => {
+        //                 voiceEntry.notes.forEach((note) => {
+        //                   note.rules.DefaultColorNotehead = (isRed ? 'red' : 'green'); // Use setColor to apply the color
+        //                 });
+        //               });
+        //             }
+        //           });
+        //         });
+        //       });
+          
+        //       if (osmdRef.current) {
+        //         osmdRef.current.render(); // Re-render the score to apply the color change
+        //       }
+        //       isRed = !isRed; // Toggle the color state
+        //     }, 5000); // Change color every 5 seconds
+          
+        //     // Cleanup the interval on component unmount
+        //     return () => clearInterval(intervalId);
+        //   }

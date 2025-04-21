@@ -92,10 +92,13 @@
   .feedback-container ul {
     list-style-type: none;
     padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
   }
   
   .feedback-container li {
-    font-size: 18px;
+    font-size: 10px;
     margin: 5px 0;
   }
   
@@ -107,4 +110,70 @@
   .feedback-container li.incorrect {
     color: red; /* Red for incorrect notes */
     font-weight: bold;
+  }
+
+    .songs-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  
+  .split-container {
+    display: flex;
+    width: 100%;
+    height: 80vh; /* Adjust height as needed */
+  }
+  
+  .left-section {
+    flex: 3; /* 75% of the width */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ccc; /* Optional: Add a divider */
+    padding: 10px;
+  }
+  
+  .osmd-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Allow scrolling if the score is too large */
+  }
+  
+  .feedback-container {
+    margin-top: 20px;
+    width: 100%;
+    flex: 1;
+    overflow-y: auto; /* Enable vertical scrolling when content overflows */
+    border: 1px solid #ccc; /* Optional: Add a border for better visibility */
+    padding: 10px;
+    background-color: #f9f9f9; /* Optional: Add a background color */
+    border-radius: 8px; /* Optional: Add rounded corners */
+  }
+  
+  .right-section {
+    flex: 1; /* 25% of the width */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align items at the top */
+    align-items: center;
+    padding: 10px;
+  }
+  
+  .start-button {
+    align-self: flex-start; /* Align the button to the left */
+    margin-bottom: 20px; /* Add spacing below the button */
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .song-selector {
+    margin-left: 10px; /* Add spacing between the dropdown and the Start/Stop button */
+    padding: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
   }

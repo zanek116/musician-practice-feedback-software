@@ -14,6 +14,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Global variables to control the recording process
 recording_thread = None
 is_recording = False
+current_expected_notes = None
 
 ######################################################################
 # Constants for pitch detection
@@ -55,9 +56,29 @@ def harmonic_product_spectrum(fft, num_harmonics=5):
         hps[:len(downsampled)] *= downsampled
     return hps
 
+@socketio.on('change_song')
+def change_song(data):
+    global current_expected_notes
+
+    song = data.get('song')
+    if song == 'loch_lomond':
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
+    elif song == 'twinkle_twinkle':
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes2.json')
+    else:
+        emit('error', {'message': 'Invalid song selected'})
+        return
+
+    try:
+        with open(json_file_path, 'r') as f:
+            current_expected_notes = json.load(f)
+        emit('song_changed', {'status': 'success', 'song': song})
+    except Exception as e:
+        emit('error', {'message': f'Failed to load expected notes: {e}'})
+        
 ######################################################################
 # Function to check if a played note matches the expected note
-def check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=50):
+def check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=0):
     for i, expected_note in enumerate(expected_notes):
         if i in processed_notes:
             continue
@@ -83,13 +104,13 @@ def check_note_accuracy(played_note, played_time, expected_notes, processed_note
 ######################################################################
 # Audio processing function
 def audio_processing():
-    global is_recording
+    global is_recording, current_expected_notes
+    
+    if current_expected_notes is None:
+        print("No expected notes loaded. Please select a song.")
+        return
 
     try:
-        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
-        with open(json_file_path, 'r') as f:
-            expected_notes = json.load(f)
-
         # Get min/max index within FFT of notes we care about
         imin = max(0, int(np.floor(note_to_fftbin(NOTE_MIN - 1))))
         imax = min(SAMPLES_PER_FFT, int(np.ceil(note_to_fftbin(NOTE_MAX + 1))))
@@ -136,7 +157,7 @@ def audio_processing():
             played_note = note_name(n0)
             
             # Compare the detected note with the expected notes
-            result = check_note_accuracy(played_note, played_time, expected_notes, processed_notes, grace_period=100)
+            result = check_note_accuracy(played_note, played_time, current_expected_notes, processed_notes, grace_period=100)
             if result:
                 print(result)
                 socketio.emit('note_feedback', {'message': result})

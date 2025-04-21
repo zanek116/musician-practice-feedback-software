@@ -38,7 +38,10 @@ const Songs = () => {
     useEffect(() => {
       const loadMusicXML = async () => {
         try {
-          const response = await fetch('/songs/loch_lomond.musicxml');
+          const response = await fetch(currentSong); // Use the current song path
+          if (!response.ok) {
+            throw new Error(`Failed to load MusicXML file: ${response.statusText}`);
+          }
           const musicXML = await response.text();
     
           osmdRef.current = new OpenSheetMusicDisplay('osmdContainer');
@@ -50,44 +53,13 @@ const Songs = () => {
     
           await osmdRef.current.load(musicXML);
           osmdRef.current.render();
-    
-        //   const graphicalMusicSheet = osmdRef.current.GraphicSheet;
-    
-        //   if (graphicalMusicSheet) {
-        //     let isRed = true; // Track the current color state
-          
-        //     // Set an interval to toggle colors every 5 seconds
-        //     const intervalId = setInterval(() => {
-        //       graphicalMusicSheet.MeasureList.forEach((measureList) => {
-        //         measureList.forEach((measure) => {
-        //           measure.staffEntries.forEach((staffEntry) => {
-        //             if (staffEntry.graphicalVoiceEntries) {
-        //               staffEntry.graphicalVoiceEntries.forEach((voiceEntry) => {
-        //                 voiceEntry.notes.forEach((note) => {
-        //                   note.rules.DefaultColorNotehead = (isRed ? 'red' : 'green'); // Use setColor to apply the color
-        //                 });
-        //               });
-        //             }
-        //           });
-        //         });
-        //       });
-          
-        //       if (osmdRef.current) {
-        //         osmdRef.current.render(); // Re-render the score to apply the color change
-        //       }
-        //       isRed = !isRed; // Toggle the color state
-        //     }, 5000); // Change color every 5 seconds
-          
-        //     // Cleanup the interval on component unmount
-        //     return () => clearInterval(intervalId);
-        //   }
         } catch (error) {
           console.error('Error loading MusicXML:', error);
         }
       };
     
       loadMusicXML();
-    }, []);
+    }, [currentSong]); // Add currentSong as a dependency
 
   useEffect(() => {
     // Initialize the metronome audio

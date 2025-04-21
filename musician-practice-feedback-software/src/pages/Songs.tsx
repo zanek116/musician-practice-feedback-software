@@ -157,28 +157,33 @@ const Songs = () => {
     if (isPlaying) {
       stopPlaybackAndFeedback();
     } else {
-      // Start the countdown before starting playback and feedback
-      let countdownValue = 3;
-      setCountdown(countdownValue);
-
-      const bpm = 120;
-      startMetronome(bpm);
-
-      // Start audio processing immediately when the countdown begins
-      if (socket) {
-        socket.emit("start_recording"); // Notify the backend to start audio processing
-      }
-
-      const countdownInterval = setInterval(() => {
-        countdownValue -= 1;
-        if (countdownValue === 0) {
-          clearInterval(countdownInterval);
-          setCountdown(null); // Clear the countdown
-          startPlaybackAndFeedback(); // Start playback and feedback after countdown
+      const metronomeSequence = [
+        { bpm: 60, duration: 3000 }, 
+        { bpm: 120, duration: 2000 }, 
+      ];
+  
+      let currentIndex = 0;
+  
+      const playMetronomeSequence = () => {
+        if (currentIndex < metronomeSequence.length) {
+          const { bpm, duration } = metronomeSequence[currentIndex];
+          startMetronome(bpm); // Play the metronome at the specified BPM
+          setTimeout(() => {
+            stopMetronome(); // Stop the metronome after the duration
+            currentIndex++;
+            playMetronomeSequence(); // Move to the next note in the sequence
+          }, duration);
         } else {
-          setCountdown(countdownValue);
+          // Start playback and feedback after the sequence
+          startMetronome(120); // Continue with quarter notes at 120 BPM
+          startPlaybackAndFeedback();
+          if (socket) {
+            socket.emit("start_recording"); // Notify the backend to start audio processing
+          }
         }
-      }, 1000);
+      };
+  
+      playMetronomeSequence(); // Start the metronome sequence
     }
   };
 

@@ -16,6 +16,17 @@ recording_thread = None
 is_recording = False
 current_expected_notes = None
 
+default_song = 'loch_lomond'
+default_json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
+
+try:
+    with open(default_json_file_path, 'r') as f:
+        current_expected_notes = json.load(f)
+    print(f"Default expected notes loaded for song: {default_song}")
+except Exception as e:
+    print(f"Failed to load default expected notes: {e}")
+
+
 ######################################################################
 # Constants for pitch detection
 NOTE_MIN = 21      # A0

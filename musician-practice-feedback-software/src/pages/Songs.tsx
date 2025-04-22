@@ -163,11 +163,19 @@ const Songs = () => {
       ];
   
       let currentIndex = 0;
+      let startDuration = 2000;
   
       const playMetronomeSequence = () => {
         if (currentIndex < metronomeSequence.length) {
           const { bpm, duration } = metronomeSequence[currentIndex];
           startMetronome(bpm); // Play the metronome at the specified BPM
+          
+          setTimeout(() => {
+            if (socket) {
+              socket.emit("start_recording");
+            }
+          }, startDuration);
+
           setTimeout(() => {
             stopMetronome(); // Stop the metronome after the duration
             currentIndex++;
@@ -177,9 +185,6 @@ const Songs = () => {
           // Start playback and feedback after the sequence
           startMetronome(120); // Continue with quarter notes at 120 BPM
           startPlaybackAndFeedback();
-          if (socket) {
-            socket.emit("start_recording"); // Notify the backend to start audio processing
-          }
         }
       };
   
@@ -210,7 +215,8 @@ const Songs = () => {
                 const songName = selectedSong.includes("twinkle_twinkle")
                   ? "twinkle_twinkle"
                   : "loch_lomond";
-                socket.emit("change_song", { song: songName });
+                socket.emit("change_song", { song: songName }); // Notify the backend
+                console.log("Emitting change_song event with song:", songName);
               }
             }}
             className="song-selector"
@@ -219,9 +225,7 @@ const Songs = () => {
               Select Song...
             </option>
             <option value="/songs/loch_lomond.musicxml">Loch Lomond</option>
-            <option value="/songs/twinkle_twinkle.xml">
-              Twinkle Twinkle Little Star
-            </option>
+            <option value="/songs/twinkle_twinkle.xml">Twinkle Twinkle Little Star</option>
           </select>
           {countdown !== null && (
             <div className="countdown">

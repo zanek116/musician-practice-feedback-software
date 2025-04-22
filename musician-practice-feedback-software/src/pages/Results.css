@@ -1,0 +1,134 @@
+.results-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  max-width: 100%; /* Allow the container to take up the full width */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column; /* Title at the top */
+  gap: 20px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.reports-row {
+  display: flex;
+  gap: 20px; /* Add spacing between the two reports */
+  justify-content: space-between; /* Distribute reports evenly */
+  align-items: flex-start; /* Align reports at the top */
+}
+
+.report-section,
+.selected-report-section {
+  flex: 1; /* Each report takes up half the width */
+  max-height: 400px;
+  overflow-y: auto;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actions-row {
+  display: flex;
+  gap: 20px; /* Add spacing between the save and saved reports sections */
+  justify-content: space-between; /* Distribute sections evenly */
+  align-items: flex-start; /* Align sections at the top */
+}
+
+.save-report-section,
+.saved-reports-section {
+  flex: 1; /* Each section below the reports takes up half the width */
+  max-height: 150px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.saved-reports-list {
+  display: flex;
+  flex-wrap: wrap; /* Allow buttons to wrap if there are too many */
+  gap: 10px; /* Add spacing between buttons */
+}
+
+.saved-report-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.saved-report-button:hover {
+  background-color: #0056b3;
+}
+
+.report-table {
+  width: 100%; /* Take up the full width of the container */
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.report-table th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.back-button {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+/* Correct notes in green */
+.report-table tr.correct {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Incorrect notes in red */
+.report-table tr.incorrect {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+@media (max-width: 768px) {
+  .reports-row,
+  .actions-row {
+    flex-direction: column; /* Stack rows vertically on smaller screens */
+  }
+
+  .report-section,
+  .selected-report-section,
+  .save-report-section,
+  .saved-reports-section {
+    width: 100%; /* Full width for smaller screens */
+  }
+}

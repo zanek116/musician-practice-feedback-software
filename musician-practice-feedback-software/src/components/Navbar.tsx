@@ -14,10 +14,7 @@ const Navbar = () => {
             <Link to="/songs">Songs</Link>
           </li>
           <li>
-            <Link to="/recordings">Recordings</Link>
-          </li>
-          <li>
-            <Link to="/test">Test Audio</Link>
+            <Link to="/results">Results</Link>
           </li>
         </ul>
       </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Fraction, NoteEnum, OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import io from 'socket.io-client';
 import './Songs.css';
+import { useNavigate } from 'react-router-dom';
 
 const Songs = () => {
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
@@ -15,6 +16,7 @@ const Songs = () => {
   const metronomeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const metronomeAudio = useRef<HTMLAudioElement | null>(null);
   const [currentSong, setCurrentSong] = useState("/songs/loch_lomond.musicxml");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Establish a connection to the backend
@@ -192,6 +194,13 @@ const Songs = () => {
     }
   };
 
+  const handleSaveFeedback = () => {
+    if (isPlaying) {
+      stopPlaybackAndFeedback(); // Stop playback before saving feedback
+    }
+    navigate("/results", { state: { feedback } }); // Pass feedback to the Results page
+  };
+
   return (
     <div className="songs-container">
       <h1>Music Practice Feedback</h1>
@@ -248,6 +257,11 @@ const Songs = () => {
                 </li>
               ))}
             </ul>
+            {feedback.length > 0 && (
+              <button onClick={handleSaveFeedback} className="save-feedback-button">
+                Save Feedback
+              </button>
+            )}
           </div>
         </div>
       </div>

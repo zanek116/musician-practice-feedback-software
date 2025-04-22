@@ -177,3 +177,58 @@
     border-radius: 4px;
     background-color: #fff;
   }
+
+  .saved-report-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space between the report name and the delete icon */
+    padding: 5px 0; /* Add vertical padding for better spacing */
+    border-bottom: 1px solid #ddd; /* Optional: Add a divider between items */
+    position: relative; /* For positioning the delete icon */
+  }
+    
+    .delete-report-button {
+      padding: 8px 16px; /* Increase padding for better clickability */
+      font-size: 14px;
+      background-color: #dc3545; /* Red background for delete */
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .delete-report-button:hover {
+      background-color: #c82333; /* Darker red on hover */
+      transform: translateY(-2px); /* Add a hover effect for better feedback */
+    }
+    
+    .saved-report-button {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #007bff; /* Blue background for view */
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .saved-report-button:hover {
+      background-color: #0056b3; /* Darker blue on hover */
+      transform: translateY(-2px); /* Add a hover effect for better feedback */
+    }
+
+    .delete-report-icon {
+      font-size: 18px; /* Make the "X" icon larger */
+      color: #dc3545; /* Red color for delete */
+      cursor: pointer;
+      margin-left: 10px; /* Add spacing between the button and the icon */
+      transition: color 0.3s, transform 0.2s;
+    }
+    
+    .delete-report-icon:hover {
+      color: #c82333; /* Darker red on hover */
+      transform: scale(1.2); /* Slightly enlarge the icon on hover */
+    }
+

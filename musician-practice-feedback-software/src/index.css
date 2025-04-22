@@ -1,1 +1,6 @@
-/* TODO: Global styling here:  */
+/* TODO: Global styling here:  *//* Ensure the entire page can scroll */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-y: auto; /* Enable vertical scrolling */
+}

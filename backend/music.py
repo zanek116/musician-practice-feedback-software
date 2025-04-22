@@ -76,6 +76,11 @@ def change_song(data):
         json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes.json')
     elif song == 'twinkle_twinkle':
         json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes2.json')
+    elif song == 'twinkle_twinkle':
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes3.json')
+    elif song == 'lamb':
+        print('lamb song')
+        json_file_path = os.path.join(os.path.dirname(__file__), 'songs', 'expected_notes4.json')
     else:
         emit('error', {'message': 'Invalid song selected'})
         return

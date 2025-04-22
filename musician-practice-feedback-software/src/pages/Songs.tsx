@@ -210,10 +210,15 @@ const Songs = () => {
             value={currentSong}
             onChange={(e) => {
               const selectedSong = e.target.value;
+              console.log("selected song path: ", selectedSong);
               setCurrentSong(selectedSong);
               if (socket) {
                 const songName = selectedSong.includes("twinkle_twinkle")
                   ? "twinkle_twinkle"
+                  : selectedSong.includes("mozart")
+                  ? "mozart"
+                  : selectedSong.includes("lamb")
+                  ? "lamb"
                   : "loch_lomond";
                 socket.emit("change_song", { song: songName }); // Notify the backend
                 console.log("Emitting change_song event with song:", songName);
@@ -226,6 +231,8 @@ const Songs = () => {
             </option>
             <option value="/songs/loch_lomond.musicxml">Loch Lomond</option>
             <option value="/songs/twinkle_twinkle.xml">Twinkle Twinkle Little Star</option>
+            <option value="/songs/mozart.xml">Mozart Song</option>
+            <option value="/songs/lamb.xml">Mary Had a Little Lamb</option>
           </select>
           {countdown !== null && (
             <div className="countdown">
